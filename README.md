@@ -36,6 +36,22 @@ generation with no check. When torn between tiers, the tie-breaker is one questi
 
 ## Install
 
+One command — detects the agent systems on your machine, copies the skill, and
+writes the gate blocks (idempotent; re-run to update):
+
+```bash
+git clone https://github.com/wikieden/hybrid-dispatcher && cd hybrid-dispatcher && ./install.sh
+```
+
+```
+./install.sh                 # install/update everywhere it finds an agent system
+./install.sh --only codex    # one platform: claude | codex | gemini | opencode
+./install.sh --dry-run       # preview, change nothing
+./install.sh --uninstall     # remove skill copies and gate blocks
+```
+
+### Manual install
+
 The skill is plain markdown — one folder, no dependencies:
 
 | Platform | Skill folder | Gate (deterministic trigger) |
