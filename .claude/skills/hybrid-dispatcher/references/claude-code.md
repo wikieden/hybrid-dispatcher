@@ -42,6 +42,15 @@ Tier guidance inside workflows:
 - Verify/judge stages → omit `model` (inherit top tier), raise `effort` for the hardest judgments.
 - `effort` stacks with `model`: a `sonnet`+`low` sweep and an inherited-model `xhigh` judge can differ ~50x in cost. Use both levers.
 
+## Compaction threshold (checked at init)
+
+Settings file: `~/.claude/settings.json` (user-global; changes take effect next session).
+
+- `autoCompactWindow` — **absolute token count**, not a percentage: compaction triggers as usage approaches this value. Propose ~`550000` for 1M-window sessions (≈55%), ~`120000–150000` for 200K-window sessions (≈60–75%). Caveat to tell the user: one global number can't fit both — if it exceeds the current model's window, that session falls back to default timing.
+- `precomputeCompactionEnabled: true` — pre-computes the summary in the background so triggering doesn't stall the session; propose it alongside.
+
+The user edits this file directly to change either later; this skill only proposes at init.
+
 ## Escalation mechanics
 
 Re-running at a higher tier = new Agent call with the higher (or omitted) `model`, prompt now including the failed attempt and what was wrong with it. If the original agent's context is valuable (it read many files), prefer `SendMessage` to that agent instead — but note SendMessage cannot change its model; escalating the model requires a fresh agent.

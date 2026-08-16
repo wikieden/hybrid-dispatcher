@@ -115,6 +115,15 @@ one model family, xhigh/medium/low reasoning effort as the tier lever).
 for design/verification tasks. If you want top tier reserved for the main session only
 (all sub-agents capped at mid), say so at init — it's recorded in the config.
 
+**Decision 4 — auto-compaction threshold.** Multi-agent work fills context fast, and a
+forced mid-task compaction loses working state at the worst moment. Init checks the host
+platform's setting and, if it's at the (late) default, proposes an earlier trigger:
+**50–60% of the window for 1M+ long-context models, ~75% for ~200K windows** — e.g.
+Claude Code `autoCompactWindow: 550000`, Codex `model_auto_compact_token_limit`, Gemini
+`chatCompression.contextPercentageThreshold: 0.55`. The value is written to the
+platform's own config file (that file stays the single source of truth), so you can
+change it later without touching the skill.
+
 The result is `.agent-dispatch.json` at the project root — gitignore it, each
 user/platform confirms their own:
 

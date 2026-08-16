@@ -8,6 +8,7 @@ To onboard a new platform at init, answer these six questions (from the tool's `
 4. **Permissions** — what flags make it run non-interactively without prompting, and what's the safe sandbox setting matching what the user allowed the main session?
 5. **Concurrency** — anything preventing parallel processes (lockfiles, rate limits)? Default cap 4–8.
 6. **Standing-instruction mechanism (install)** — where does this system load persistent instructions from (`AGENTS.md`, `GEMINI.md`, a rules directory, a config key)? Install the skill *that* way: add a block there telling the agent to read this SKILL.md (path spelled out) and follow it before spawning sub-agents. Don't assume a `.claude/skills/`-style registry exists.
+7. **Auto-compaction threshold** — does the platform expose one, and in what unit? (Gemini CLI: `chatCompression.contextPercentageThreshold` in `~/.gemini/settings.json`, a fraction — 0.55 for long-context; opencode: no threshold, only `compaction.auto`/`prune` booleans in `opencode.json`.) If configurable and at default, propose 50–60% of the window for 1M+ models, ~75% for ~200K, write it to the platform's config on confirmation, and tell the user where to change it later. If not configurable, enable whatever pruning/compaction switches exist and note the limitation.
 
 Record as:
 

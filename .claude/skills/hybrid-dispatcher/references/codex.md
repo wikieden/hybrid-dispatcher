@@ -44,6 +44,14 @@ codex exec -m <model> -c model_reasoning_effort="<effort>" \
 - **Sandbox/approvals**: sub-processes need non-interactive settings — `--full-auto` or an explicit `--sandbox` mode consistent with what the user allowed the main session. Never grant a sub-agent broader permissions than the session has.
 - **Context**: each subprocess starts cold in the working directory. The prompt must name the files to read; there is no shared conversation.
 
+## Compaction threshold (checked at init)
+
+Config file: `~/.codex/config.toml`.
+
+- `model_auto_compact_token_limit` — absolute token count; pair it with `model_context_window` to compute the percentage. Propose 50–60% of the window for 1M+ windows (e.g. `550000` for 1M), ~75% for smaller windows. If the existing value is already at or below the proposed one, leave it alone and say so.
+
+The user edits config.toml directly to change it later.
+
 ## Escalation mechanics
 
 Re-run `codex exec` with the next tier's flags, prepending the failed attempt's output and a one-paragraph diagnosis to the prompt. Subprocesses keep no state, so escalation always carries context in the prompt.
