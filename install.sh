@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 # hybrid-dispatcher installer
 #
+# One-liner (no clone needed):
+#   curl -fsSL https://raw.githubusercontent.com/wikieden/hybrid-dispatcher/main/install.sh | bash
+#
+# From a checkout:
 #   ./install.sh                 install/update on every agent system found on this machine
 #   ./install.sh --only codex    install/update on one platform (claude|codex|gemini|opencode)
 #   ./install.sh --dry-run       show what would happen, change nothing
 #   ./install.sh --uninstall     remove skill copies and gate blocks everywhere
+#
+# (Flags work with the one-liner too: curl -fsSL <url> | bash -s -- --only codex)
 #
 # Idempotent: re-running updates the skill files in place and rewrites the gate
 # block (old TIERED_MODEL_DISPATCH_* blocks from earlier versions are migrated).
@@ -30,10 +36,24 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-[ -d "$SRC" ] || { echo "error: skill source not found at $SRC" >&2; exit 1; }
-
 say()  { printf '%s\n' "$*"; }
 run()  { if [ "$DRY" = 1 ]; then say "  [dry-run] $*"; else "$@"; fi; }
+
+# Standalone mode (curl | bash): no checkout next to the script — fetch the skill
+# files from GitHub into a temp dir and install from there.
+REPO_RAW="https://raw.githubusercontent.com/wikieden/hybrid-dispatcher/main"
+if [ ! -d "$SRC" ] && [ "$UNINSTALL" = 0 ]; then
+  say "no local checkout found — fetching $SKILL_NAME from GitHub…"
+  TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+  mkdir -p "$TMP/references"
+  for f in SKILL.md references/claude-code.md references/codex.md \
+           references/generic-cli.md references/task-playbooks.md; do
+    curl -fsSL "$REPO_RAW/.claude/skills/$SKILL_NAME/$f" -o "$TMP/$f" \
+      || { echo "error: download failed for $f (is the repo public?)" >&2; exit 1; }
+  done
+  SRC="$TMP"
+fi
+[ -d "$SRC" ] || [ "$UNINSTALL" = 1 ] || { echo "error: skill source not found" >&2; exit 1; }
 
 # strip_block <file> — remove old and new gate blocks (portable, no sed -i quirks)
 strip_block() {

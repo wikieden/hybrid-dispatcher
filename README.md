@@ -36,8 +36,14 @@ generation with no check. When torn between tiers, the tie-breaker is one questi
 
 ## Install
 
-One command — detects the agent systems on your machine, copies the skill, and
+One line — detects the agent systems on your machine, copies the skill, and
 writes the gate blocks (idempotent; re-run to update):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wikieden/hybrid-dispatcher/main/install.sh | bash
+```
+
+Or from a checkout:
 
 ```bash
 git clone https://github.com/wikieden/hybrid-dispatcher && cd hybrid-dispatcher && ./install.sh
