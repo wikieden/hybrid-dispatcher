@@ -36,9 +36,15 @@ Check for `.agent-dispatch.json` at the project root.
     "low": "sonnet"
   },
   "budget_mode": "balanced",
+  "top_tier_subagents": true,
   "confirmed": "2026-08-16"
 }
 ```
+
+`top_tier_subagents: false` means top tier is reserved for the main session: sub-agents
+are capped at mid, and any subtask the rubric scores as top-tier (design, adversarial
+verification) is either done in the main session or split until its pieces fit mid tier.
+Offer this choice at init — some users want hard cost ceilings on delegated work.
 
 The config is per-project and shared across platforms: if the user later opens the same project in Codex, the tier *roles* (top/mid/low) carry over and only the model identifiers need re-mapping — offer to add a second platform block rather than overwriting.
 

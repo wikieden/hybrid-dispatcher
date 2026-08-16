@@ -77,32 +77,73 @@ trigger rates in non-interactive runs — so the deterministic gate matters.)
 On non-Claude platforms, tier models must come from that platform's own catalog
 (Codex: whatever `codex exec --help` lists; etc.) — never another vendor's model names.
 
-## Usage
+## Step 1 — Initialize: set your dispatch strategy
 
-You don't call the skill directly — describe a task that needs multiple sub-agents
-and the gate makes the skill take over. Manual invocation also works: `/hybrid-dispatcher`
-(Claude Code) or just say "use hybrid-dispatcher".
-
-### First use in a project — init (happens once)
+After installing, the first thing to do in each project is set the strategy. Either
+trigger it deliberately — say **"初始化 dispatch 配置"** / "initialize the dispatch
+config" (or `/hybrid-dispatcher`) — or just start your first multi-agent task and
+init runs before anything is spawned. Either way it's a one-time, three-decision
+conversation:
 
 ```
-You:   Audit this service for bugs — fan it out to sub-agents, don't burn budget.
+You:   初始化 dispatch 配置
 
 Agent: ⚡ hybrid-dispatcher · platform=claude-code · initializing
-       No .agent-dispatch.json found. Proposed config for this project:
+       No .agent-dispatch.json found. Proposed strategy for this project:
          top: (omit model — inherits your session model)
          mid: opus      low: sonnet      budget_mode: balanced
        Confirm, or tell me what to change.
 
-You:   ok
+You:   预算档改 economy，其他可以
 
 Agent: → wrote .agent-dispatch.json — this question never comes back for this project.
 ```
 
-On Codex/Gemini/opencode the proposal lists *that* platform's models instead
-(e.g. Codex: one model family with xhigh/medium/low reasoning effort as the tier lever).
+**Decision 1 — tier→model mapping.** The defaults fit most Claude Code setups:
+`top = inherit` (whatever model *you* picked for the session — that's the point),
+`mid = opus`, `low = sonnet`. Change it when your situation differs — e.g. running
+the session on Opus already? then `top = inherit, mid = sonnet, low = haiku`. On
+Codex/Gemini/opencode the proposal lists *that* platform's models instead (Codex:
+one model family, xhigh/medium/low reasoning effort as the tier lever).
 
-### Every dispatch after that
+**Decision 2 — default budget mode.** Pick per project temperament:
+- `economy` — exploratory repos, prototypes, anything where output is easy to verify
+- `balanced` — the default; the rubric as written
+- `quality` — production-critical code, security-sensitive work, expensive-to-detect failures
+
+**Decision 3 — where top-tier is allowed.** By default sub-agents may run at top tier
+for design/verification tasks. If you want top tier reserved for the main session only
+(all sub-agents capped at mid), say so at init — it's recorded in the config.
+
+The result is `.agent-dispatch.json` at the project root — gitignore it, each
+user/platform confirms their own:
+
+```jsonc
+{
+  "platform": "claude-code",
+  "tiers": {
+    "top": "inherit",        // omit/inherit = whatever model YOU picked for the session
+    "mid": "opus",
+    "low": "sonnet"          // haiku exists one tier below for trivial bulk sweeps
+  },
+  "budget_mode": "balanced", // economy | balanced | quality
+  "confirmed": "2026-08-16"
+}
+```
+
+On non-Claude platforms tiers hold that platform's own identifiers — e.g. Codex records
+literal flags like `{"model": "...", "config": "model_reasoning_effort=\"xhigh\""}`.
+Opening the same project on a second platform keeps the tier *roles* and only remaps
+the identifiers (the skill offers to add a second platform block). Edit the file
+directly anytime to change defaults; per-task spoken overrides always win.
+
+## Step 2 — Use it
+
+You don't call the skill directly — describe a task that needs multiple sub-agents
+and the gate makes the skill take over (manual: `/hybrid-dispatcher` or "use
+hybrid-dispatcher").
+
+### What every dispatch looks like
 
 Three things are always visible:
 
@@ -126,31 +167,6 @@ Three things are always visible:
 | "keep it under ~200k tokens" | plans the whole dispatch against the budget, downgrades non-critical work first |
 | "run the parser task on opus" | overrides one assignment; the rest stand |
 | *(nothing)* | balanced — the rubric as written |
-
-## Configuration
-
-`.agent-dispatch.json` lives at the project root (auto-created by init, gitignore it —
-each user/platform confirms their own):
-
-```jsonc
-{
-  "platform": "claude-code",
-  "tiers": {
-    "top": "inherit",        // omit/inherit = whatever model YOU picked for the session
-    "mid": "opus",
-    "low": "sonnet"          // haiku exists one tier below for trivial bulk sweeps
-  },
-  "budget_mode": "balanced", // economy | balanced | quality
-  "confirmed": "2026-08-16"
-}
-```
-
-On non-Claude platforms tiers hold that platform's own identifiers — e.g. Codex records
-literal flags like `{"model": "...", "config": "model_reasoning_effort=\"xhigh\""}`.
-Opening the same project on a second platform keeps the tier *roles* and only remaps
-the identifiers (the skill offers to add a second platform block).
-
-Edit the file directly to change defaults; per-task spoken overrides always win.
 
 ## Scenarios
 
