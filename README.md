@@ -77,6 +77,117 @@ trigger rates in non-interactive runs — so the deterministic gate matters.)
 On non-Claude platforms, tier models must come from that platform's own catalog
 (Codex: whatever `codex exec --help` lists; etc.) — never another vendor's model names.
 
+## Usage
+
+You don't call the skill directly — describe a task that needs multiple sub-agents
+and the gate makes the skill take over. Manual invocation also works: `/hybrid-dispatcher`
+(Claude Code) or just say "use hybrid-dispatcher".
+
+### First use in a project — init (happens once)
+
+```
+You:   Audit this service for bugs — fan it out to sub-agents, don't burn budget.
+
+Agent: ⚡ hybrid-dispatcher · platform=claude-code · initializing
+       No .agent-dispatch.json found. Proposed config for this project:
+         top: (omit model — inherits your session model)
+         mid: opus      low: sonnet      budget_mode: balanced
+       Confirm, or tell me what to change.
+
+You:   ok
+
+Agent: → wrote .agent-dispatch.json — this question never comes back for this project.
+```
+
+On Codex/Gemini/opencode the proposal lists *that* platform's models instead
+(e.g. Codex: one model family with xhigh/medium/low reasoning effort as the tier lever).
+
+### Every dispatch after that
+
+Three things are always visible:
+
+1. **Activation banner** — `⚡ hybrid-dispatcher · platform=claude-code · budget=balanced · 6 subtasks planned`
+2. **Assignment list before spawning** (your moment to intervene — "run S3 on opus" works):
+   ```
+   S1 inventory error paths        → low/sonnet   (mechanical read-and-report)
+   S2 design error contract        → top/inherit  (mistakes poison everything downstream)
+   S3 refactor db.py               → mid/opus     (clear spec, test-verified)
+   S4 run test suite               → low/sonnet   (execute and report)
+   S5 adversarial diff review      → top/inherit  (misses would look plausible)
+   ```
+3. **Dispatch log at the end** — every sub-agent, its task, model, and outcome.
+
+### Steering with plain language
+
+| You say | Effect |
+|---|---|
+| "do this cheaply" / "省着点" | economy: downgrade wherever output is verifiable; top tier only for verification |
+| "quality first, don't skimp" | quality: critical path up a tier; multi-attempt + judge for design questions |
+| "keep it under ~200k tokens" | plans the whole dispatch against the budget, downgrades non-critical work first |
+| "run the parser task on opus" | overrides one assignment; the rest stand |
+| *(nothing)* | balanced — the rubric as written |
+
+## Configuration
+
+`.agent-dispatch.json` lives at the project root (auto-created by init, gitignore it —
+each user/platform confirms their own):
+
+```jsonc
+{
+  "platform": "claude-code",
+  "tiers": {
+    "top": "inherit",        // omit/inherit = whatever model YOU picked for the session
+    "mid": "opus",
+    "low": "sonnet"          // haiku exists one tier below for trivial bulk sweeps
+  },
+  "budget_mode": "balanced", // economy | balanced | quality
+  "confirmed": "2026-08-16"
+}
+```
+
+On non-Claude platforms tiers hold that platform's own identifiers — e.g. Codex records
+literal flags like `{"model": "...", "config": "model_reasoning_effort=\"xhigh\""}`.
+Opening the same project on a second platform keeps the tier *roles* and only remaps
+the identifiers (the skill offers to add a second platform block).
+
+Edit the file directly to change defaults; per-task spoken overrides always win.
+
+## Scenarios
+
+**Bulk migration — "convert these ~40 endpoints from callbacks to async/await, in parallel"**
+Development playbook: conversion-pattern spec written at top tier first (one page, gates
+everything); endpoints batched to parallel mid-tier implementers (low if the codemod is
+fully mechanical and tests exist); test run on low; final adversarial diff review on top.
+Typical shape: ~80% of agent-hours on cheap tiers.
+
+**Cost-conscious audit — "audit this repo for bugs, don't run everything on the big model"**
+Audit playbook, economy mode: parallel low-tier finders per module (slight overlap at file
+boundaries so seams get two readers); orchestrator verifies every finding line-by-line
+against source before absorbing; cross-module/systemic findings added in the main session.
+In our eval this shape found all seeded bugs with zero top-tier sub-agents.
+
+**Competitor research — "research these 6 products, write a comparison"**
+Research playbook: one low-tier reader per product (same structured note schema for all);
+conflicting claims reconciled at mid; comparison and recommendation synthesized in the
+main session; the 2–3 facts the conclusion rests on get a top-tier spot-check.
+
+**Documentation — "write API docs for this package"**
+Documentation playbook: structure and voice agreed in the main session first; sections
+drafted in parallel on mid; terminology/link sweep on low (a script where possible); a
+top-tier accuracy review checks the doc *against the code* — plausible-but-wrong docs
+are the failure mode nothing else catches.
+
+**Grunt sweep — "summarize every file, list the TODOs, cheap as possible"**
+Economy short-circuit: one haiku/low agent does the whole sweep, the main session
+verifies with a grep and adds what it missed. No fan-out — parallelism isn't worth the
+overhead below a certain size, and the skill says so instead of spawning for show.
+
+**Same repo, different tool — opening a Claude-initialized project in Codex**
+The gate block in `~/.codex/AGENTS.md` fires; the skill finds `.agent-dispatch.json`,
+sees no Codex block, and proposes one (OpenAI models, effort levels as the tier lever)
+without touching the Claude mapping. Tier roles, budget mode, and escalation policy
+carry over unchanged.
+
 ## Repository layout
 
 - [`.claude/skills/hybrid-dispatcher/`](.claude/skills/hybrid-dispatcher/) — the skill:
