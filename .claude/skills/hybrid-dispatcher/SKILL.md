@@ -104,6 +104,8 @@ When the user states an explicit token/cost budget, plan the whole dispatch agai
    ```
    Only re-check when the session model differs from what the last dispatch saw; don't repeat an unheeded warning every turn within the same session. If the user accepts, update `.agent-dispatch.json` so it sticks.
 
+   If the config carries `"collapse_ack": true`, the user has deliberately accepted a merged top/mid tier — stay silent about collapse (inversion still warns, since that one is never intentional). Offer to set this flag when a user waves the warning off, rather than making them see it again next session.
+
    Then print the banner so the user knows dispatch is being governed (they should never have to guess whether the skill ran):
    `⚡ hybrid-dispatcher · platform=<platform> · model=<session model> · budget=<mode> · <N> subtasks planned`
    The per-subtask assignment list (step 2) and the closing dispatch log are the other two visibility anchors — all three are mandatory output, not optional narration.

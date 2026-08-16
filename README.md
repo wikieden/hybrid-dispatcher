@@ -166,6 +166,10 @@ Three things are always visible:
    ⚠ session model is opus — same as tier mid, so top/mid are identical.
      Suggest: mid=sonnet, low=haiku for this session. Proceeding with current config.
    ```
+   Merged top/mid is a legitimate choice (judgment and implementation both at the strong
+   model, cheap tier still absorbing the grunt work). Set `"collapse_ack": true` in the
+   config to accept it and silence the warning for good — inversion still warns, since
+   that one is never on purpose.
 2. **Assignment list before spawning** (your moment to intervene — "run S3 on opus" works):
    ```
    S1 inventory error paths        → low/sonnet   (mechanical read-and-report)
