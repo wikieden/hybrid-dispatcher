@@ -1,0 +1,26 @@
+{
+  "skill_name": "hybrid-dispatcher",
+  "evals": [
+    {
+      "id": 0,
+      "name": "init-dispatch-plan",
+      "prompt": "I'm about to start a big overhaul of error handling across my orderlib project at {PROJECT}. Before any real work starts: set up whatever model-dispatch configuration you need for this project, break the overhaul into concrete subtasks, and assign each subtask a model tier/model with a one-line justification. Write the full plan to {OUTPUTS}/dispatch-plan.md. Don't execute the refactor yet — I want to review the plan and tier assignments first.",
+      "expected_output": "A dispatch-plan.md with subtasks each assigned a model tier and justification; an .agent-dispatch.json config with top/mid/low mapping. Mechanical subtasks on cheap tier, design/verification on top tier.",
+      "files": ["fixtures/orderlib"]
+    },
+    {
+      "id": 1,
+      "name": "tiered-audit",
+      "prompt": "Audit the orderlib project at {PROJECT} for bugs and error-handling problems. Use sub-agents to parallelize the work, but I'm cost-conscious — don't run everything on the most expensive model. Write your findings to {OUTPUTS}/audit-report.md and include a 'Dispatch log' section at the end listing each sub-agent you spawned, its task, and which model it ran on.",
+      "expected_output": "audit-report.md finding most of the 5 seeded issues (api.py swallowed-exception/wrong status + missing not-found; db.py bare except + connection leak; pricing.py KeyError + round() losing cents; utils.py BaseException catch), with a dispatch log showing multiple sub-agents on at least two different model tiers, cheap tiers for search/read work.",
+      "files": ["fixtures/orderlib"]
+    },
+    {
+      "id": 2,
+      "name": "economy-sweep",
+      "prompt": "Grunt work: I need a file-by-file summary of everything in the orderlib project at {PROJECT}, plus a list of any TODO / FIXME or obviously sketchy spots. This is low-stakes — do it as cheaply as you can. Save it to {OUTPUTS}/file-summary.md, ending with a note on how you divided the work and which model(s) did it.",
+      "expected_output": "file-summary.md covering all 5 files, catching the TODO in utils.py and FIXME in db.py, with the work done on cheap models (sonnet/haiku) or directly without spawning expensive agents.",
+      "files": ["fixtures/orderlib"]
+    }
+  ]
+}

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>tiered-model-dispatch — Skill Description Optimization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lora', Georgia, serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            background: #faf9f5;
+            color: #141413;
+        }
+        h1 { font-family: 'Poppins', sans-serif; color: #141413; }
+        .explainer {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e8e6dc;
+            color: #b0aea5;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .summary {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e8e6dc;
+        }
+        .summary p { margin: 5px 0; }
+        .best { color: #788c5d; font-weight: bold; }
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+        table {
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid #e8e6dc;
+            border-radius: 6px;
+            font-size: 12px;
+            min-width: 100%;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #e8e6dc;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        th {
+            font-family: 'Poppins', sans-serif;
+            background: #141413;
+            color: #faf9f5;
+            font-weight: 500;
+        }
+        th.test-col {
+            background: #6a9bcc;
+        }
+        th.query-col { min-width: 200px; }
+        td.description {
+            font-family: monospace;
+            font-size: 11px;
+            word-wrap: break-word;
+            max-width: 400px;
+        }
+        td.result {
+            text-align: center;
+            font-size: 16px;
+            min-width: 40px;
+        }
+        td.test-result {
+            background: #f0f6fc;
+        }
+        .pass { color: #788c5d; }
+        .fail { color: #c44; }
+        .rate {
+            font-size: 9px;
+            color: #b0aea5;
+            display: block;
+        }
+        tr:hover { background: #faf9f5; }
+        .score {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .score-good { background: #eef2e8; color: #788c5d; }
+        .score-ok { background: #fef3c7; color: #d97706; }
+        .score-bad { background: #fceaea; color: #c44; }
+        .train-label { color: #b0aea5; font-size: 10px; }
+        .test-label { color: #6a9bcc; font-size: 10px; font-weight: bold; }
+        .best-row { background: #f5f8f2; }
+        th.positive-col { border-bottom: 3px solid #788c5d; }
+        th.negative-col { border-bottom: 3px solid #c44; }
+        th.test-col.positive-col { border-bottom: 3px solid #788c5d; }
+        th.test-col.negative-col { border-bottom: 3px solid #c44; }
+        .legend { font-family: 'Poppins', sans-serif; display: flex; gap: 20px; margin-bottom: 10px; font-size: 13px; align-items: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-swatch { width: 16px; height: 16px; border-radius: 3px; display: inline-block; }
+        .swatch-positive { background: #141413; border-bottom: 3px solid #788c5d; }
+        .swatch-negative { background: #141413; border-bottom: 3px solid #c44; }
+        .swatch-test { background: #6a9bcc; }
+        .swatch-train { background: #141413; }
+    </style>
+</head>
+<body>
+    <h1>tiered-model-dispatch — Skill Description Optimization</h1>
+    <div class="explainer">
+        <strong>Optimizing your skill's description.</strong> This page updates automatically as Claude tests different versions of your skill's description. Each row is an iteration — a new description attempt. The columns show test queries: green checkmarks mean the skill triggered correctly (or correctly didn't trigger), red crosses mean it got it wrong. The "Train" score shows performance on queries used to improve the description; the "Test" score shows performance on held-out queries the optimizer hasn't seen. When it's done, Claude will apply the best-performing description to your skill.
+    </div>
+
+    <div class="summary">
+        <p><strong>Original:</strong> Orchestrate complex multi-agent work by keeping all planning and synthesis in the main session (the user-selected model, e.g. Fable 5) while dispatching each sub-agent at the cheapest model tier that can do its job well (top/mid/low — on Claude Code: fable/opus/sonnet). Use this whenever a task will spawn multiple sub-agents or delegate subtasks — complex features, audits, migrations, research fan-outs, parallel reviews — and whenever the user mentions sub-agents, delegating, fanning out, model tiers, or saving cost/tokens on subtasks, even if they don&#x27;t name specific models. Works on Claude Code, Codex, and other agent CLIs; on first use in a project it confirms the platform and writes a dispatch config.</p>
+        <p class="best"><strong>Best:</strong> Orchestrate complex multi-agent work by keeping all planning and synthesis in the main session (the user-selected model, e.g. Fable 5) while dispatching each sub-agent at the cheapest model tier that can do its job well (top/mid/low — on Claude Code: fable/opus/sonnet). Use this whenever a task will spawn multiple sub-agents or delegate subtasks — complex features, audits, migrations, research fan-outs, parallel reviews — and whenever the user mentions sub-agents, delegating, fanning out, model tiers, or saving cost/tokens on subtasks, even if they don&#x27;t name specific models. Works on Claude Code, Codex, and other agent CLIs; on first use in a project it confirms the platform and writes a dispatch config.</p>
+        <p><strong>Best Score:</strong> 4/8 (test)</p>
+        <p><strong>Iterations:</strong> 5 | <strong>Train:</strong> 12 | <strong>Test:</strong> 8</p>
+    </div>
+
+    <div class="legend">
+        <span style="font-weight:600">Query columns:</span>
+        <span class="legend-item"><span class="legend-swatch swatch-positive"></span> Should trigger</span>
+        <span class="legend-item"><span class="legend-swatch swatch-negative"></span> Should NOT trigger</span>
+        <span class="legend-item"><span class="legend-swatch swatch-train"></span> Train</span>
+        <span class="legend-item"><span class="legend-swatch swatch-test"></span> Test</span>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Iter</th>
+                <th>Train</th>
+                <th>Test</th>
+                <th class="query-col">Description</th>
+                <th class="positive-col">this monorepo has 5 packages, have agents write the missing unit tests for each package in parallel. use your judgment on which model per package, packages/core is the tricky one</th>
+                <th class="positive-col">can you review PRs #234 #235 and #236 in parallel with different agents? the simple ones on sonnet is fine, the gnarly db migration one should get a proper model</th>
+                <th class="positive-col">use subagents to research these 6 competitor products and write me a comparison doc. cheap models for the data gathering, good model for the final analysis pls</th>
+                <th class="positive-col">这个项目我想让你当总指挥：规划用你自己（fable），子任务按难度分给 opus 或 sonnet 跑，先把调度配置初始化好</th>
+                <th class="positive-col">I need to migrate ~40 API endpoints in my express app from callbacks to async/await. can you fan this out to sub-agents so it doesn&#x27;t take forever? I don&#x27;t want to burn tokens running everything on the big model either</th>
+                <th class="positive-col">帮我把这个仓库里所有用到 moment.js 的地方换成 dayjs，文件挺多的，拆给子 agent 并行做吧，便宜点的模型能干的就别用贵的</th>
+                <th class="negative-col">what&#x27;s the difference between fable and opus pricing on the anthropic API? trying to estimate monthly costs for our app</th>
+                <th class="negative-col">我要本地跑一个 7B 模型做微调，哪个 GPU 型号性价比高？预算两万以内</th>
+                <th class="negative-col">how do subagents work in claude code? like what tools do they get and can they spawn their own agents?</th>
+                <th class="negative-col">which model should I use for my customer support chatbot, sonnet or opus? it&#x27;s mostly FAQ stuff with some escalation logic</th>
+                <th class="negative-col">set up a github action that runs our test matrix in parallel across 4 workers to speed up CI</th>
+                <th class="negative-col">summarize docs/rfc-142.md for me and list the open questions at the end</th>
+                <th class="test-col positive-col">I have a list of 30 flaky tests in tests/integration. spawn agents to investigate them, but triage first — most are probably trivial, save the expensive model for the weird ones</th>
+                <th class="test-col positive-col">I&#x27;m about to start a huge refactor of src/legacy (like 200 files). before you start, tell me how you&#x27;re going to split the work between agents and models. I&#x27;m on the max plan but still don&#x27;t want to waste usage</th>
+                <th class="test-col negative-col">write an agent using the Claude Agent SDK that can browse the web and summarize pages, needs tool use and streaming</th>
+                <th class="test-col positive-col">audit our payments service for security issues. it&#x27;s a big codebase so you&#x27;ll probably want multiple agents on it. budget matters — be smart about which model does what</th>
+                <th class="test-col positive-col">kick off a deep audit of our terraform repo — spin up whatever agents you need, I want it thorough but don&#x27;t nuke my usage limits</th>
+                <th class="test-col negative-col">rename the variable qty to quantity across the whole repo, should be like 20 files</th>
+                <th class="test-col negative-col">帮我看看 pricing.py 第 8 行为什么会报 KeyError，用户传了个不存在的会员等级就崩了</th>
+                <th class="test-col negative-col">my langchain multi-agent demo keeps looping — agent A keeps handing off to agent B forever. code is in orchestrator.py, can you debug it</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="best-row">
+                <td>1</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">Orchestrate complex multi-agent work by keeping all planning and synthesis in the main session (the user-selected model, e.g. Fable 5) while dispatching each sub-agent at the cheapest model tier that can do its job well (top/mid/low — on Claude Code: fable/opus/sonnet). Use this whenever a task will spawn multiple sub-agents or delegate subtasks — complex features, audits, migrations, research fan-outs, parallel reviews — and whenever the user mentions sub-agents, delegating, fanning out, model tiers, or saving cost/tokens on subtasks, even if they don&#x27;t name specific models. Works on Claude Code, Codex, and other agent CLIs; on first use in a project it confirms the platform and writes a dispatch config.</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>2</td>
+                <td><span class="score score-ok">20/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">Use this skill whenever the user asks to split work across multiple agents or subagents, in any language or phrasing — &quot;fan this out&quot;, &quot;run these in parallel with different agents&quot;, &quot;拆给子 agent 并行做&quot;. It assigns each subtask the right model tier (e.g. fable/opus/sonnet), so also use it when the user mentions picking models per subtask, using cheaper models where they suffice, saving tokens/cost on delegated work, or reserving the &quot;big&quot;/&quot;proper&quot; model for hard parts. Typical jobs: writing tests across packages, reviewing several PRs at once, bulk migrations/refactors over many files or endpoints, multi-source research with a synthesized report — anything decomposable into parallel sub-agent tasks. Also use when the user wants you to act as orchestrator/coordinator (&quot;总指挥&quot;) or to set up/initialize the dispatch config. Do NOT use for general questions about models, pricing, or how subagents work, or for parallelism that doesn&#x27;t involve LLM agents (CI workers, threads).</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">1/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">1/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>3</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">MANDATORY first step before spawning subagents — invoke this BEFORE calling the Agent/Task/Workflow tool whenever a request will be split across multiple agents. Do not dispatch agents directly: this skill decides which model tier (e.g. fable/opus/sonnet) each subtask gets and how results are verified. Triggers on any phrasing or language — &quot;fan out&quot;, &quot;use subagents&quot;, &quot;parallel agents&quot;, &quot;拆给子 agent 并行做&quot;, &quot;总指挥&quot; — and on any decomposable bulk job delegated to agents: tests per package, reviewing several PRs, migrating/refactoring many files or endpoints, multi-source research with a synthesized report. Also triggers when the user wants cheaper models for easy subtasks, the &quot;big&quot;/&quot;proper&quot; model reserved for hard ones, token/cost savings on delegated work, or the dispatch config initialized. Skip only for informational questions (how subagents/models/pricing work) or parallelism without LLM agents (CI workers, threads).</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>4</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">13/24</span></td>
+                <td class="description">Use for any request that will be executed by multiple subagents — parallel PR reviews, writing tests across several packages, migrating/refactoring many files or endpoints, multi-source research producing a comparison or report, repo-wide bulk changes split across agents. Whenever the user says to fan work out, use subagents/parallel agents/an orchestrator (in any language), or wants cheap models on easy subtasks with the strong/&quot;proper&quot; model saved for hard ones, or asks to initialize the dispatch config, invoke this skill FIRST — before spawning any agent: it assigns each subtask a model tier (e.g. fable/opus/sonnet), plans the fan-out, and verifies results. Skip only for questions about how models/subagents/pricing work, and for parallelism without LLM agents (CI runners, threads).</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">1/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>5</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">This skill owns the project&#x27;s model-dispatch config: which model (fable/opus/sonnet or equivalents) each subagent runs on is defined by `.agent-dispatch.json` and the tier rubric inside this skill — you cannot correctly pick per-agent models without reading it. So whenever a request means spawning more than one subagent — reviewing several PRs with separate agents, writing tests per package, fanning a migration or bulk refactor across many files, multi-agent research feeding one report, or any &quot;split this among sub-agents&quot; ask in any language — open this skill before the first Agent/Task call. Same when the user talks about model economics for delegated work: cheap/fast models for easy pieces, the strong or &quot;proper&quot; model for the hard piece, saving tokens on subtasks, acting as coordinator assigning models by difficulty, or initializing the dispatch config. Don&#x27;t use it for informational questions about models, subagents, or pricing, nor for parallelism with no LLM agents (CI matrices, threads, workers).</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+</body>
+</html>

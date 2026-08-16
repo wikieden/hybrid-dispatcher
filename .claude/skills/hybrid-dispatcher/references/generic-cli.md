@@ -1,0 +1,27 @@
+# Platform: any other agent CLI
+
+To onboard a new platform at init, answer these six questions (from the tool's `--help`, its docs, or the user), then record the answers in `.agent-dispatch.json`:
+
+1. **One-shot invocation** — what command runs a single non-interactive task and exits? (the `claude -p` / `codex exec` equivalent)
+2. **Model selection** — which flag or config key picks the model, and what are the current identifiers for a strong / standard / fast model **from this platform's own catalog**? Some platforms tier by reasoning-effort setting instead of model name — either works; record the literal flags. Never map tiers to another vendor's model names: the tier roles travel, the identifiers don't.
+3. **Output capture** — how do you get the final answer? (stdout, an output-file flag, a JSON mode?) Prefer a mode you can parse; otherwise instruct the agent to end with a fenced JSON block.
+4. **Permissions** — what flags make it run non-interactively without prompting, and what's the safe sandbox setting matching what the user allowed the main session?
+5. **Concurrency** — anything preventing parallel processes (lockfiles, rate limits)? Default cap 4–8.
+6. **Standing-instruction mechanism (install)** — where does this system load persistent instructions from (`AGENTS.md`, `GEMINI.md`, a rules directory, a config key)? Install the skill *that* way: add a block there telling the agent to read this SKILL.md (path spelled out) and follow it before spawning sub-agents. Don't assume a `.claude/skills/`-style registry exists.
+
+Record as:
+
+```json
+{
+  "platform": "<name>",
+  "spawn": "<command template with {model} {prompt} {output} slots>",
+  "tiers": {
+    "top": "<literal model/flag value>",
+    "mid": "<...>",
+    "low": "<...>"
+  },
+  "budget_mode": "balanced"
+}
+```
+
+Everything else in SKILL.md — the rubric, budget modes, escalation, division of labor — is platform-neutral and applies unchanged. The orchestrator is always the interactive session the user launched; sub-agents are always background one-shot runs with self-contained prompts.

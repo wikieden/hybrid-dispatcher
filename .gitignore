@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+dispatch-workspace/iteration-*/
+dispatch-workspace/viewer.log
+dispatch-workspace/fixtures/orderlib/orders.db
+.agent-dispatch.json

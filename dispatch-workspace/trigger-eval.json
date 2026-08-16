@@ -1,0 +1,22 @@
+[
+  {"query": "I need to migrate ~40 API endpoints in my express app from callbacks to async/await. can you fan this out to sub-agents so it doesn't take forever? I don't want to burn tokens running everything on the big model either", "should_trigger": true},
+  {"query": "帮我把这个仓库里所有用到 moment.js 的地方换成 dayjs，文件挺多的，拆给子 agent 并行做吧，便宜点的模型能干的就别用贵的", "should_trigger": true},
+  {"query": "audit our payments service for security issues. it's a big codebase so you'll probably want multiple agents on it. budget matters — be smart about which model does what", "should_trigger": true},
+  {"query": "I'm about to start a huge refactor of src/legacy (like 200 files). before you start, tell me how you're going to split the work between agents and models. I'm on the max plan but still don't want to waste usage", "should_trigger": true},
+  {"query": "use subagents to research these 6 competitor products and write me a comparison doc. cheap models for the data gathering, good model for the final analysis pls", "should_trigger": true},
+  {"query": "这个项目我想让你当总指挥：规划用你自己（fable），子任务按难度分给 opus 或 sonnet 跑，先把调度配置初始化好", "should_trigger": true},
+  {"query": "can you review PRs #234 #235 and #236 in parallel with different agents? the simple ones on sonnet is fine, the gnarly db migration one should get a proper model", "should_trigger": true},
+  {"query": "I have a list of 30 flaky tests in tests/integration. spawn agents to investigate them, but triage first — most are probably trivial, save the expensive model for the weird ones", "should_trigger": true},
+  {"query": "kick off a deep audit of our terraform repo — spin up whatever agents you need, I want it thorough but don't nuke my usage limits", "should_trigger": true},
+  {"query": "this monorepo has 5 packages, have agents write the missing unit tests for each package in parallel. use your judgment on which model per package, packages/core is the tricky one", "should_trigger": true},
+  {"query": "which model should I use for my customer support chatbot, sonnet or opus? it's mostly FAQ stuff with some escalation logic", "should_trigger": false},
+  {"query": "what's the difference between fable and opus pricing on the anthropic API? trying to estimate monthly costs for our app", "should_trigger": false},
+  {"query": "帮我看看 pricing.py 第 8 行为什么会报 KeyError，用户传了个不存在的会员等级就崩了", "should_trigger": false},
+  {"query": "write an agent using the Claude Agent SDK that can browse the web and summarize pages, needs tool use and streaming", "should_trigger": false},
+  {"query": "my langchain multi-agent demo keeps looping — agent A keeps handing off to agent B forever. code is in orchestrator.py, can you debug it", "should_trigger": false},
+  {"query": "rename the variable qty to quantity across the whole repo, should be like 20 files", "should_trigger": false},
+  {"query": "set up a github action that runs our test matrix in parallel across 4 workers to speed up CI", "should_trigger": false},
+  {"query": "how do subagents work in claude code? like what tools do they get and can they spawn their own agents?", "should_trigger": false},
+  {"query": "我要本地跑一个 7B 模型做微调，哪个 GPU 型号性价比高？预算两万以内", "should_trigger": false},
+  {"query": "summarize docs/rfc-142.md for me and list the open questions at the end", "should_trigger": false}
+]
