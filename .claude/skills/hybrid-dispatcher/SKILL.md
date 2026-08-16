@@ -92,8 +92,20 @@ When the user states an explicit token/cost budget, plan the whole dispatch agai
 
 ## Dispatch procedure
 
-0. **Announce activation.** The moment this skill takes over, print one visible line so the user knows dispatch is being governed (they should never have to guess whether the skill ran):
-   `⚡ hybrid-dispatcher · platform=<platform> · budget=<mode> · <N> subtasks planned`
+0. **Announce activation, after checking the mapping still holds.** Before printing the banner, compare the session's *current* model against the configured tiers — users switch models mid-project (`/model`), and a mapping that was sensible at init can quietly stop making sense. Two failure modes to detect:
+
+   - **Tier collapse** — the session model equals the configured `mid` (or `low`) model, so `top` and that tier are the same thing and the split buys nothing. Example: config says `top: inherit, mid: opus` and the user switches the session to Opus.
+   - **Inversion** — the session model is *weaker* than a lower tier's model, so "delegating down" would actually delegate up.
+
+   When either fires, say so in one line and propose the shifted mapping, then continue with the current config unless the user takes the suggestion — a warning must never block the work:
+   ```
+   ⚠ session model is opus — same as tier mid, so top/mid are identical.
+     Suggest: mid=sonnet, low=haiku for this session. Proceeding with current config.
+   ```
+   Only re-check when the session model differs from what the last dispatch saw; don't repeat an unheeded warning every turn within the same session. If the user accepts, update `.agent-dispatch.json` so it sticks.
+
+   Then print the banner so the user knows dispatch is being governed (they should never have to guess whether the skill ran):
+   `⚡ hybrid-dispatcher · platform=<platform> · model=<session model> · budget=<mode> · <N> subtasks planned`
    The per-subtask assignment list (step 2) and the closing dispatch log are the other two visibility anchors — all three are mandatory output, not optional narration.
 1. **Plan in the main session.** Decompose into subtasks with explicit inputs, outputs, and done-criteria. This is your job; do not spawn a "planner" sub-agent.
 2. **Score and assign tiers** using the rubric. Say the assignments out loud briefly (one line per subtask) so the user can see the reasoning and object.

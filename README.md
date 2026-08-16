@@ -156,7 +156,16 @@ hybrid-dispatcher").
 
 Three things are always visible:
 
-1. **Activation banner** — `⚡ hybrid-dispatcher · platform=claude-code · budget=balanced · 6 subtasks planned`
+1. **Activation banner** — `⚡ hybrid-dispatcher · platform=claude-code · model=fable · budget=balanced · 6 subtasks planned`
+
+   Before the banner, the skill checks your *current* session model against the configured
+   tiers. Switch models mid-project (`/model opus` when `mid` is also opus) and the tiers
+   collapse into each other — delegation stops buying anything. You get a one-line warning
+   with a shifted mapping to accept or ignore; it never blocks the work:
+   ```
+   ⚠ session model is opus — same as tier mid, so top/mid are identical.
+     Suggest: mid=sonnet, low=haiku for this session. Proceeding with current config.
+   ```
 2. **Assignment list before spawning** (your moment to intervene — "run S3 on opus" works):
    ```
    S1 inventory error paths        → low/sonnet   (mechanical read-and-report)

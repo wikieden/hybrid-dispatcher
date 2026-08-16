@@ -42,6 +42,18 @@ Tier guidance inside workflows:
 - Verify/judge stages → omit `model` (inherit top tier), raise `effort` for the hardest judgments.
 - `effort` stacks with `model`: a `sonnet`+`low` sweep and an inherited-model `xhigh` judge can differ ~50x in cost. Use both levers.
 
+## Detecting the session model (for the tier-collapse check)
+
+The session model is named in your own system prompt ("You are powered by the model named …"). Compare it against the config's `mid`/`low` values by family name (fable / opus / sonnet / haiku), not exact IDs — `claude-opus-5` and `opus` are the same tier.
+
+Sensible shifted mappings when the session model moves:
+
+| Session model | Suggested mapping |
+|---|---|
+| Fable | `top: inherit, mid: opus, low: sonnet` (the default) |
+| Opus | `top: inherit, mid: sonnet, low: haiku` |
+| Sonnet | `top: inherit, mid: haiku, low: haiku` — or tell the user delegation saves little here and most work should stay in-session |
+
 ## Compaction threshold (checked at init)
 
 Settings file: `~/.claude/settings.json` (user-global; changes take effect next session).
