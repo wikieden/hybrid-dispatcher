@@ -190,6 +190,49 @@ Three things are always visible:
 | "run the parser task on opus" | overrides one assignment; the rest stand |
 | *(nothing)* | balanced — the rubric as written |
 
+### Logs and token accounting
+
+**Live, while it runs** — each spawn and each return prints a line, so work leaving the
+session is never invisible:
+
+```
+→ [S3] refactor db.py · mid/opus · spawned
+← [S3] done · 42.1k tok · 68s
+```
+
+**At the end of every dispatch** — the log table plus a tally broken down by tier:
+
+```
+Total: 3 agents · 83.2k tokens · 154s wall · by tier: low 12.4k / mid 42.1k / top 28.7k
+```
+
+**Across the whole project** — every run is appended as one JSON line to
+`.dispatch-log.jsonl` (gitignored). Ask "这个项目花了多少 token" and the skill runs the
+bundled summarizer:
+
+```bash
+python3 ~/.claude/skills/hybrid-dispatcher/scripts/dispatch-stats.py           # all history
+python3 ~/.claude/skills/hybrid-dispatcher/scripts/dispatch-stats.py --last 10 # recent runs
+python3 ~/.claude/skills/hybrid-dispatcher/scripts/dispatch-stats.py --json    # for scripts
+```
+
+```
+hybrid-dispatcher usage · all 3 runs · .dispatch-log.jsonl
+  8 sub-agents · 222.5k tokens · 360s of agent time
+  1 escalation(s) — a subtask came back untrusted and was re-run a tier up
+
+  by tier:
+    top     28.7k  12.9%  ███
+    mid     82.0k  36.9%  █████████
+    low    111.8k  50.2%  ████████████
+
+  estimated ~71% cheaper than running every sub-agent at top tier
+```
+
+That last number is the point of the whole skill: whether tiering is actually paying off
+on *your* work. Where a platform doesn't expose per-agent tokens, entries are logged as
+`null` and counted separately — the skill never invents figures to fill the table.
+
 ## Scenarios
 
 **Bulk migration — "convert these ~40 endpoints from callbacks to async/await, in parallel"**

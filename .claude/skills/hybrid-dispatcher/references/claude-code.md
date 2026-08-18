@@ -42,6 +42,15 @@ Tier guidance inside workflows:
 - Verify/judge stages → omit `model` (inherit top tier), raise `effort` for the hardest judgments.
 - `effort` stacks with `model`: a `sonnet`+`low` sweep and an inherited-model `xhigh` judge can differ ~50x in cost. Use both levers.
 
+## Reading per-agent cost (for the dispatch log)
+
+When a background Agent finishes, its completion notification carries `total_tokens` and `duration_ms` — that is the only place these appear, and they are not recoverable later. Record them the moment each notification arrives (not batched at the end), then use them for the closing tally and the `.dispatch-log.jsonl` entry.
+
+Caveats worth passing to the user rather than papering over:
+- An agent that spawns its own sub-agents reports **its own** tokens; nested agents notify separately. Sum them if you want the true subtree cost, and say which you reported.
+- An agent resumed with `SendMessage` notifies again — add the segments rather than overwriting, or the first leg vanishes from the tally.
+- Workflow-tool runs report per-agent totals through the workflow journal instead; `budget.spent()` gives the running total inside a script.
+
 ## Detecting the session model (for the tier-collapse check)
 
 The session model is named in your own system prompt ("You are powered by the model named …"). Compare it against the config's `mid`/`low` values by family name (fable / opus / sonnet / haiku), not exact IDs — `claude-opus-5` and `opus` are the same tier.

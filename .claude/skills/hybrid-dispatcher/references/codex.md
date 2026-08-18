@@ -44,6 +44,10 @@ codex exec -m <model> -c model_reasoning_effort="<effort>" \
 - **Sandbox/approvals**: sub-processes need non-interactive settings — `--full-auto` or an explicit `--sandbox` mode consistent with what the user allowed the main session. Never grant a sub-agent broader permissions than the session has.
 - **Context**: each subprocess starts cold in the working directory. The prompt must name the files to read; there is no shared conversation.
 
+## Reading per-agent cost (for the dispatch log)
+
+`codex exec` prints a token summary to stderr on completion; capture it per sub-process (`2> /tmp/dispatch/task-1.err`) and parse the totals, or read the session's own usage line. If a run yields nothing parseable, log `"tokens": null` — the stats script counts those separately rather than skewing the totals.
+
 ## Compaction threshold (checked at init)
 
 Config file: `~/.codex/config.toml`.

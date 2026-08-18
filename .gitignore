@@ -4,3 +4,4 @@ dispatch-workspace/iteration-*/
 dispatch-workspace/viewer.log
 dispatch-workspace/fixtures/orderlib/orders.db
 .agent-dispatch.json
+.dispatch-log.jsonl

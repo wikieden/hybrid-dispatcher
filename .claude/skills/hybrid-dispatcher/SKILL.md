@@ -112,10 +112,50 @@ When the user states an explicit token/cost budget, plan the whole dispatch agai
 1. **Plan in the main session.** Decompose into subtasks with explicit inputs, outputs, and done-criteria. This is your job; do not spawn a "planner" sub-agent.
 2. **Score and assign tiers** using the rubric. Say the assignments out loud briefly (one line per subtask) so the user can see the reasoning and object.
 3. **Write self-contained prompts.** Sub-agents see nothing of this conversation. Each prompt carries: the task, file paths, relevant context pasted in, the expected output format, and what "done" looks like. A structured output schema when the platform supports it.
-4. **Spawn independent tasks in parallel**, dependent ones in sequence. Use the platform's mechanics from the reference file you loaded at init.
+4. **Spawn independent tasks in parallel**, dependent ones in sequence. Use the platform's mechanics from the reference file you loaded at init. **Print one line per spawn as it goes out** — the user should see work leaving the session in real time, not only learn about it afterwards:
+   `→ [S3] refactor db.py · mid/opus · spawned`
+   and one line as each returns, carrying its cost:
+   `← [S3] done · 42.1k tok · 68s`
 5. **Verify before absorbing.** Cheap-tier outputs feeding into important decisions get checked — by a test, a script, or a top-tier verifier agent, per budget mode.
 6. **Escalate on failure, don't loop.** If a sub-agent fails or returns something you don't trust, re-run **once** at the next tier up, with the failed attempt and why it was wrong included in the prompt. Never retry the same tier more than once, and never spiral more than two escalations — at that point the task decomposition was wrong; re-plan it yourself.
 7. **Synthesize in the main session.** The final answer is yours, written from the results — not a pasted concatenation of sub-agent reports.
+8. **Close with the dispatch log and the tally**, and append the run to the log file (see below).
+
+## Logging and accounting
+
+Two audiences: the user watching now (inline lines), and the user asking later "where did my tokens go" (the log file).
+
+**In-session, at the end of every dispatch**, print the log plus a tally so cost is legible without leaving the conversation:
+
+```
+Dispatch log
+| # | Task | Tier/model | Tokens | Time | Outcome |
+|---|------|-----------|--------|------|---------|
+| S1 | inventory error paths | low/sonnet | 12.4k | 31s | ok |
+| S3 | refactor db.py | mid/opus | 42.1k | 68s | ok |
+| S5 | adversarial review | top/inherit | 28.7k | 55s | 1 finding |
+Total: 3 agents · 83.2k tokens · 154s wall · by tier: low 12.4k / mid 42.1k / top 28.7k
+```
+
+Token and duration figures come from whatever your platform reports when a sub-agent finishes — see the platform reference for where to read them. If a platform reports nothing, write `n/a` rather than guessing; a fabricated number is worse than a missing one.
+
+**Persist each run** as one JSON line appended to `.dispatch-log.jsonl` at the project root (create it on first dispatch; it is per-project history, gitignore it):
+
+```json
+{"ts":"2026-08-16T14:22:31Z","task":"audit orderlib for bugs","platform":"claude-code","session_model":"opus","budget_mode":"economy","agents":[{"id":"S1","task":"inventory error paths","tier":"low","model":"sonnet","tokens":12400,"seconds":31,"outcome":"ok"}],"totals":{"agents":3,"tokens":83200,"seconds":154,"by_tier":{"low":12400,"mid":42100,"top":28700}},"escalations":0}
+```
+
+Append with a shell heredoc or a tiny script — never rewrite the file, so concurrent sessions can't clobber each other's history.
+
+**Reporting on history.** When the user asks about past dispatch cost/usage ("这个项目花了多少 token", "which tier eats the most"), run the bundled script rather than eyeballing the JSONL:
+
+```bash
+python3 <skill-dir>/scripts/dispatch-stats.py            # whole project history
+python3 <skill-dir>/scripts/dispatch-stats.py --last 10  # recent runs
+python3 <skill-dir>/scripts/dispatch-stats.py --json     # machine-readable
+```
+
+It prints per-tier token shares, per-run rows, escalation counts, and an estimated cost-vs-all-top-tier saving — the number that tells the user whether tiering is actually paying off.
 
 ## Task-type playbooks
 
@@ -129,3 +169,4 @@ Read the one matching the configured platform when you need spawn mechanics or m
 - `references/codex.md` — spawning via `codex exec` subprocesses, reasoning-effort mapping
 - `references/generic-cli.md` — the questions to answer to onboard any other agent CLI, and the config shape to record
 - `references/task-playbooks.md` — stage-by-stage tier presets per task type (research / development / documentation / audit / mixed)
+- `scripts/dispatch-stats.py` — summarize `.dispatch-log.jsonl`: per-tier token shares, recent runs, escalations, estimated saving vs all-top-tier
