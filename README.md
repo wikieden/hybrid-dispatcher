@@ -36,17 +36,14 @@ generation with no check. When torn between tiers, the tie-breaker is one questi
 
 ## Install
 
-One line — detects the agent systems on your machine, copies the skill, and
-writes the gate blocks (idempotent; re-run to update):
+The skill is plain markdown — no runtime, no dependencies. Installing means putting the
+folder where your agent looks for skills and adding a short gate block so it fires
+before sub-agents get spawned.
+
+**macOS / Linux** — one line, detects every agent system on the machine:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/wikieden/hybrid-dispatcher/main/install.sh | bash
-```
-
-Or from a checkout:
-
-```bash
-git clone https://github.com/wikieden/hybrid-dispatcher && cd hybrid-dispatcher && ./install.sh
 ```
 
 ```
@@ -56,23 +53,26 @@ git clone https://github.com/wikieden/hybrid-dispatcher && cd hybrid-dispatcher 
 ./install.sh --uninstall     # remove skill copies and gate blocks
 ```
 
-### Manual install
+**Windows, or if you prefer npm** — the companion CLI does the same job cross-platform:
 
-The skill is plain markdown — one folder, no dependencies:
+```bash
+npx hybrid-dispatcher install
+```
+
+**By hand** — copy [`.claude/skills/hybrid-dispatcher/`](.claude/skills/hybrid-dispatcher/)
+into the skill folder, then add a gate block to the instruction file:
 
 | Platform | Skill folder | Gate (deterministic trigger) |
 |---|---|---|
 | Claude Code | `~/.claude/skills/hybrid-dispatcher/` (or project `.claude/skills/`) | project `CLAUDE.md` |
 | Codex | `~/.codex/skills/hybrid-dispatcher/` | `~/.codex/AGENTS.md` or repo `AGENTS.md` |
 | Gemini | `~/.gemini/skills/hybrid-dispatcher/` | `~/.gemini/GEMINI.md` |
-| opencode | `~/.config/opencode/skills/hybrid-dispatcher/` | `~/.config/opencode/AGENTS.md` |
+| opencode | `~/.config/opencode/skills/hybrid-dispatcher/` (XDG / `%APPDATA%` on Windows) | `.../opencode/AGENTS.md` |
 | anything else | any readable path | that system's standing-instruction file — see [references/generic-cli.md](.claude/skills/hybrid-dispatcher/references/generic-cli.md) |
 
-Copy [`.claude/skills/hybrid-dispatcher/`](.claude/skills/hybrid-dispatcher/) to the
-skill folder, then add a short gate block to the platform's instruction file telling
-the agent to read `SKILL.md` before spawning any sub-agent. (Description-based skill
-triggering alone is unreliable for a gating skill — measured near-zero autonomous
-trigger rates in non-interactive runs — so the deterministic gate matters.)
+The gate matters: description-based triggering alone measured near-zero on gating tasks
+in non-interactive runs, so the explicit "read this before spawning anything" line is
+what actually makes the skill fire.
 
 On non-Claude platforms, tier models must come from that platform's own catalog
 (Codex: whatever `codex exec --help` lists; etc.) — never another vendor's model names.
@@ -207,13 +207,15 @@ Total: 3 agents · 83.2k tokens · 154s wall · by tier: low 12.4k / mid 42.1k /
 ```
 
 **Across the whole project** — every run is appended as one JSON line to
-`.dispatch-log.jsonl` (gitignored). Ask "这个项目花了多少 token" and the skill runs the
-bundled summarizer:
+`.dispatch-log.jsonl` (gitignored). Ask "这个项目花了多少 token" and you get:
+
+The skill totals it up directly for you. Once history grows, the optional CLI does the
+same arithmetic faster:
 
 ```bash
-python3 ~/.claude/skills/hybrid-dispatcher/scripts/dispatch-stats.py           # all history
-python3 ~/.claude/skills/hybrid-dispatcher/scripts/dispatch-stats.py --last 10 # recent runs
-python3 ~/.claude/skills/hybrid-dispatcher/scripts/dispatch-stats.py --json    # for scripts
+npx hybrid-dispatcher stats            # all history
+npx hybrid-dispatcher stats --last 10  # recent runs
+npx hybrid-dispatcher stats --json     # for scripts
 ```
 
 ```
@@ -269,6 +271,40 @@ sees no Codex block, and proposes one (OpenAI models, effort levels as the tier 
 without touching the Claude mapping. Tier roles, budget mode, and escalation policy
 carry over unchanged.
 
+## Optional: the companion CLI
+
+Everything above works without it. The CLI ([`cli/`](cli/), zero runtime dependencies,
+Node 18+) exists for the mechanical chores that get tedious by hand — and for Windows,
+where the shell installer can't run. The skill suggests it when you hit one of these,
+and otherwise does the work itself:
+
+```bash
+npx hybrid-dispatcher install     # cross-platform install (incl. Windows)
+npx hybrid-dispatcher init        # interactive strategy setup, with validation
+npx hybrid-dispatcher doctor      # installs, gate blocks, config validity, compaction thresholds
+npx hybrid-dispatcher stats       # token accounting over dispatch history
+```
+
+`doctor` is the one worth knowing about — it answers "is this actually set up, and is my
+mapping still sensible?" in one shot:
+
+```
+installation:
+  ✓ Claude Code: skill installed (no global gate file; use a project CLAUDE.md gate)
+  ✓ Codex: skill + gate installed
+project config:
+  ✓ config valid · claude-code · top=inherit mid=opus low=sonnet · balanced
+  ⚠ session model "opus" matches tier mid ("opus") — top and mid are the same model
+auto-compaction:
+  ✓ Claude Code: compaction at 550k tokens (autoCompactWindow)
+  ⚠ Gemini CLI: compaction at 90% of context — consider 50–60% for long-context models
+```
+
+What deliberately has **no** CLI equivalent: the tier rubric, task decomposition, and
+verification strategy. Those are judgment, they live in `SKILL.md` as instructions for
+the model, and encoding them as code would reduce "would I notice if this came back
+wrong?" to keyword matching.
+
 ## Repository layout
 
 - [`.claude/skills/hybrid-dispatcher/`](.claude/skills/hybrid-dispatcher/) — the skill:
@@ -276,6 +312,7 @@ carry over unchanged.
   task-type playbooks
 - [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) — this repo's own gate blocks
   (they double as working examples)
+- [`cli/`](cli/) — optional TypeScript CLI (install / init / doctor / stats), zero runtime deps
 - `dispatch-workspace/` — eval fixtures, benchmark results, and trigger-optimization
   reports from skill-creator iterations (regenerable; not part of the skill)
 

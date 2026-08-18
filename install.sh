@@ -45,10 +45,9 @@ REPO_RAW="https://raw.githubusercontent.com/wikieden/hybrid-dispatcher/main"
 if [ ! -d "$SRC" ] && [ "$UNINSTALL" = 0 ]; then
   say "no local checkout found — fetching $SKILL_NAME from GitHub…"
   TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-  mkdir -p "$TMP/references" "$TMP/scripts"
+  mkdir -p "$TMP/references"
   for f in SKILL.md references/claude-code.md references/codex.md \
-           references/generic-cli.md references/task-playbooks.md \
-           scripts/dispatch-stats.py; do
+           references/generic-cli.md references/task-playbooks.md; do
     curl -fsSL "$REPO_RAW/.claude/skills/$SKILL_NAME/$f" -o "$TMP/$f" \
       || { echo "error: download failed for $f (is the repo public?)" >&2; exit 1; }
   done
@@ -95,16 +94,10 @@ EOF
 
 copy_skill() {
   local dst="$1"
-  run mkdir -p "$dst/references" "$dst/scripts"
+  run mkdir -p "$dst/references"
   run cp "$SRC/SKILL.md" "$dst/SKILL.md"
-  if [ "$DRY" = 1 ]; then
-    say "  [dry-run] cp references/*.md -> $dst/references/"
-    say "  [dry-run] cp scripts/* -> $dst/scripts/"
-  else
-    cp "$SRC"/references/*.md "$dst/references/"
-    cp "$SRC"/scripts/* "$dst/scripts/" 2>/dev/null || true
-    chmod +x "$dst"/scripts/* 2>/dev/null || true
-  fi
+  if [ "$DRY" = 1 ]; then say "  [dry-run] cp references/*.md -> $dst/references/"
+  else cp "$SRC"/references/*.md "$dst/references/"; fi
 }
 
 remove_skill() {

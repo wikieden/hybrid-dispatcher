@@ -1,0 +1,34 @@
+{
+  "name": "hybrid-dispatcher",
+  "version": "0.1.0",
+  "description": "Tiered model dispatch for multi-agent work — install, init, and account for it across Claude Code, Codex, Gemini, and opencode",
+  "type": "module",
+  "bin": {
+    "hybrid-dispatcher": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "skill"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js', 0o755)\"",
+    "bundle-skill": "node -e \"const{cpSync,rmSync}=require('fs');rmSync('skill',{recursive:true,force:true});cpSync('../.claude/skills/hybrid-dispatcher','skill',{recursive:true,filter:s=>!s.includes('evals')})\"",
+    "prepublishOnly": "npm run bundle-skill && npm run build"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "agents",
+    "subagents",
+    "llm",
+    "orchestration"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3"
+  }
+}

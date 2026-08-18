@@ -145,17 +145,26 @@ Token and duration figures come from whatever your platform reports when a sub-a
 {"ts":"2026-08-16T14:22:31Z","task":"audit orderlib for bugs","platform":"claude-code","session_model":"opus","budget_mode":"economy","agents":[{"id":"S1","task":"inventory error paths","tier":"low","model":"sonnet","tokens":12400,"seconds":31,"outcome":"ok"}],"totals":{"agents":3,"tokens":83200,"seconds":154,"by_tier":{"low":12400,"mid":42100,"top":28700}},"escalations":0}
 ```
 
-Append with a shell heredoc or a tiny script — never rewrite the file, so concurrent sessions can't clobber each other's history.
-
-**Reporting on history.** When the user asks about past dispatch cost/usage ("这个项目花了多少 token", "which tier eats the most"), run the bundled script rather than eyeballing the JSONL:
+Append it with a plain shell redirect — one line, no tooling needed, and appending (never rewriting) is what lets concurrent sessions share the file safely:
 
 ```bash
-python3 <skill-dir>/scripts/dispatch-stats.py            # whole project history
-python3 <skill-dir>/scripts/dispatch-stats.py --last 10  # recent runs
-python3 <skill-dir>/scripts/dispatch-stats.py --json     # machine-readable
+printf '%s\n' '<the json>' >> .dispatch-log.jsonl
 ```
 
-It prints per-tier token shares, per-run rows, escalation counts, and an estimated cost-vs-all-top-tier saving — the number that tells the user whether tiering is actually paying off.
+**Reporting on history.** When the user asks what a project has cost ("这个项目花了多少 token", "which tier eats the most"), read `.dispatch-log.jsonl` and total it up yourself — it is a small file of flat records, and summing tokens by tier is arithmetic you can do directly. Report per-tier shares and, when it is informative, how the weighted spend compares with running everything at top tier (low≈1x, mid≈3x, top≈10x).
+
+## Optional: the companion CLI
+
+Everything above works with no dependencies. A small CLI exists for the mechanical chores that get tedious by hand — mention it **only when the user hits one of these**, and never as an upsell:
+
+| When | Suggest |
+|---|---|
+| History has grown past a few dozen runs, or they ask for it repeatedly | `npx hybrid-dispatcher stats` — same numbers, computed rather than eyeballed |
+| Something seems misconfigured, or the skill isn't triggering on another platform | `npx hybrid-dispatcher doctor` — checks installs, gate blocks, config validity, compaction thresholds |
+| They want the skill on another machine — especially **Windows**, where the shell installer doesn't run | `npx hybrid-dispatcher install` |
+| They ask to redo init non-interactively | `npx hybrid-dispatcher init` |
+
+If the CLI is absent, do the work yourself as described above; a missing optional tool is never a reason to stall. The judgment half of this skill — the rubric, decomposition, verification strategy — has no CLI equivalent by design and stays here.
 
 ## Task-type playbooks
 
@@ -169,4 +178,3 @@ Read the one matching the configured platform when you need spawn mechanics or m
 - `references/codex.md` — spawning via `codex exec` subprocesses, reasoning-effort mapping
 - `references/generic-cli.md` — the questions to answer to onboard any other agent CLI, and the config shape to record
 - `references/task-playbooks.md` — stage-by-stage tier presets per task type (research / development / documentation / audit / mixed)
-- `scripts/dispatch-stats.py` — summarize `.dispatch-log.jsonl`: per-tier token shares, recent runs, escalations, estimated saving vs all-top-tier
