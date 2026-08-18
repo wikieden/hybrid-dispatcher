@@ -17,6 +17,7 @@ import { icon, runDoctor } from "./doctor.js";
 import { appendRun, loadRuns, type RunRecord } from "./log.js";
 import { renderSummary, summarize } from "./stats.js";
 import { PLATFORMS } from "./platforms.js";
+import { readStdin, sessionCheck, type HookInput } from "./session.js";
 
 const HELP = `hybrid-dispatcher — tiered model dispatch across agent systems
 
@@ -26,6 +27,7 @@ const HELP = `hybrid-dispatcher — tiered model dispatch across agent systems
   npx hybrid-dispatcher doctor [--model <name>]           check install, config, compaction
   npx hybrid-dispatcher stats [--last N] [--json]         token accounting from dispatch history
   npx hybrid-dispatcher log '<json>'                      append one run record (used by the skill)
+  npx hybrid-dispatcher session-check [--compaction]      SessionStart hook: warn only when something is off
 
 Platforms: ${PLATFORMS.map((p) => p.key).join(", ")}`;
 
@@ -151,6 +153,7 @@ async function main(): Promise<number> {
       json: { type: "boolean" },
       "dry-run": { type: "boolean" },
       yes: { type: "boolean", short: "y" },
+      compaction: { type: "boolean" },
     },
   });
 
@@ -173,6 +176,23 @@ async function main(): Promise<number> {
       return cmdStats(values.last ? Number(values.last) : undefined, values.json ?? false);
     case "log":
       return cmdLog(positionals[0]);
+    case "session-check": {
+      // Hook contract: never fail the session. Any trouble here exits 0 silently.
+      let input: HookInput = {};
+      try {
+        const raw = (await readStdin()).trim();
+        if (raw) input = JSON.parse(raw) as HookInput;
+      } catch {
+        return 0;
+      }
+      try {
+        const out = sessionCheck(input, { compaction: values.compaction ?? false });
+        if (out.length) console.log(out.join("\n"));
+      } catch {
+        /* a broken check must not be louder than no check */
+      }
+      return 0;
+    }
     default:
       console.error(`unknown command: ${cmd}\n`);
       console.log(HELP);

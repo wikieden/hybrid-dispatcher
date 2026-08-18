@@ -115,14 +115,22 @@ one model family, xhigh/medium/low reasoning effort as the tier lever).
 for design/verification tasks. If you want top tier reserved for the main session only
 (all sub-agents capped at mid), say so at init — it's recorded in the config.
 
-**Decision 4 — auto-compaction threshold.** Multi-agent work fills context fast, and a
-forced mid-task compaction loses working state at the worst moment. Init checks the host
-platform's setting and, if it's at the (late) default, proposes an earlier trigger:
-**50–60% of the window for 1M+ long-context models, ~75% for ~200K windows** — e.g.
-Claude Code `autoCompactWindow: 550000`, Codex `model_auto_compact_token_limit`, Gemini
-`chatCompression.contextPercentageThreshold: 0.55`. The value is written to the
-platform's own config file (that file stays the single source of truth), so you can
-change it later without touching the skill.
+**Decision 4 — auto-compaction.** Multi-agent work fills context fast, and a forced
+mid-task compaction loses working state at the worst moment. Init surfaces your platform's
+current setting and the trade it implies, rather than proposing a number — because the
+trade differs by platform:
+
+| Platform | Setting | What lowering it costs |
+|---|---|---|
+| Claude Code | `autoCompactWindow` (tokens) | It is also the ceiling — compacting at 550k on a 1M model means a 550k window, full stop. "Compact earlier" and "keep the full window" are not both available. |
+| Codex | `model_auto_compact_token_limit` | Same absolute-token semantics; compare against `model_context_window`. |
+| Gemini | `chatCompression.contextPercentageThreshold` | A true percentage — genuinely "compact earlier, same window". |
+| opencode | `compaction.auto` / `prune` | No threshold exposed; only on/off plus tool-output pruning. |
+
+Claude Code also offers per-session alternatives that leave global settings alone:
+`/autocompact`, the `--autocompact <tokens>` launch flag, and
+`CLAUDE_CODE_AUTO_COMPACT_WINDOW`. `precomputeCompactionEnabled: true` is free either way —
+it pre-computes the summary so compaction doesn't stall the session.
 
 The result is `.agent-dispatch.json` at the project root — gitignore it, each
 user/platform confirms their own:
@@ -284,6 +292,35 @@ npx hybrid-dispatcher init        # interactive strategy setup, with validation
 npx hybrid-dispatcher doctor      # installs, gate blocks, config validity, compaction thresholds
 npx hybrid-dispatcher stats       # token accounting over dispatch history
 ```
+
+### Catching problems at session start
+
+Rather than finding out mid-dispatch, wire the check into a `SessionStart` hook — its
+stdout becomes context the agent can act on. In `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "npx hybrid-dispatcher session-check" }] }
+    ]
+  }
+}
+```
+
+It stays **silent when everything is fine** — it speaks only when the config is invalid,
+missing in a project that opted into the gate, or collapsed against the model you just
+launched with:
+
+```
+hybrid-dispatcher · session model claude-opus-5 · tiers top=inherit mid=opus low=sonnet · balanced
+  ⚠ session model "claude-opus-5" matches tier mid ("opus") — top and mid are the same model
+```
+
+Two honest limits: the hook's `model` field is documented as optional, so when it is
+absent the collapse check is skipped and the in-skill check at dispatch time covers it;
+and a hook cannot change compaction settings for the session already running — it can
+only tell you what to relaunch with.
 
 `doctor` is the one worth knowing about — it answers "is this actually set up, and is my
 mapping still sensible?" in one shot:

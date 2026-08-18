@@ -23,7 +23,7 @@ Check for `.agent-dispatch.json` at the project root.
 3. **Propose the config to the user and confirm** — platform, the three tier→model mappings, and default budget mode. Two hard rules here:
    - **Tier models must come from the platform's own supported catalog.** On Claude Code that's fable/opus/sonnet/haiku; on Codex it's whatever `codex exec --help` / the user's plan lists; on anything else, whatever that CLI's model flag accepts. Never carry one vendor's model names onto another vendor's platform — the tier *roles* (top/mid/low) are portable, the identifiers are not. Model names drift over time, so verify against the platform's own help/docs before proposing.
    - **Install the skill the way the host system expects.** Claude Code discovers it via `.claude/skills/`; other systems have their own standing-instruction mechanism (Codex: `AGENTS.md`; others: see their docs). Each platform reference file has an "Install" section — follow it so the skill is natively discoverable there, rather than assuming Claude Code conventions exist.
-   - **Check the platform's auto-compaction threshold** (multi-agent work fills context fast — orchestration that hits a forced mid-task compaction loses working state at the worst moment). Read the current setting per the platform reference's "Compaction threshold" section. If it's unset or at the platform default (typically ~90%+), propose an earlier trigger: **50–60% of the window for long-context models (1M+), ~75% for ~200K windows**. On confirmation write it to the platform's own config file — that file stays the single source of truth, so the user can change it later without touching this skill; tell them where it lives.
+   - **Surface the platform's auto-compaction setting** (multi-agent work fills context fast, and a forced mid-task compaction loses working state at the worst moment). Read it per the platform reference's "Compaction threshold" section, then present the trade rather than a number — on some platforms, including Claude Code, the compaction point *is* the usable ceiling, so compacting earlier means a smaller working window. State what the current value costs and let the user choose; write their answer to the platform's own config file, which stays the single source of truth, and tell them where it lives.
 
    This is the one moment this skill stops and asks; everything after runs autonomously.
 4. **Write `.agent-dispatch.json`**:
@@ -163,6 +163,8 @@ Everything above works with no dependencies. A small CLI exists for the mechanic
 | Something seems misconfigured, or the skill isn't triggering on another platform | `npx hybrid-dispatcher doctor` — checks installs, gate blocks, config validity, compaction thresholds |
 | They want the skill on another machine — especially **Windows**, where the shell installer doesn't run | `npx hybrid-dispatcher install` |
 | They ask to redo init non-interactively | `npx hybrid-dispatcher init` |
+
+| They want problems caught at session start rather than at dispatch | wire `hybrid-dispatcher session-check` into a `SessionStart` hook — it prints only when the config is broken, missing, or collapsed against the session's model, and stays silent otherwise |
 
 If the CLI is absent, do the work yourself as described above; a missing optional tool is never a reason to stall. The judgment half of this skill — the rubric, decomposition, verification strategy — has no CLI equivalent by design and stays here.
 

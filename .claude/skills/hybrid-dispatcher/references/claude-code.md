@@ -67,10 +67,13 @@ Sensible shifted mappings when the session model moves:
 
 Settings file: `~/.claude/settings.json` (user-global; changes take effect next session).
 
-- `autoCompactWindow` — **absolute token count**, not a percentage: compaction triggers as usage approaches this value. Propose ~`550000` for 1M-window sessions (≈55%), ~`120000–150000` for 200K-window sessions (≈60–75%). Caveat to tell the user: one global number can't fit both — if it exceeds the current model's window, that session falls back to default timing.
-- `precomputeCompactionEnabled: true` — pre-computes the summary in the background so triggering doesn't stall the session; propose it alongside.
+- `autoCompactWindow` — absolute token count (100000–1000000) marking how full the context gets before Claude Code compacts. **It doubles as a ceiling**: since compaction fires there, the session never uses more than that, and the displayed window shrinks to match. Lowering it to "compact earlier" and "keep the full window" are not both available here — present that trade instead of proposing a value. Unset means Claude Code picks a window tuned for the model.
+- `autoCompactEnabled` — whether auto-compaction happens at all (default true).
+- `precomputeCompactionEnabled: true` — pre-computes the summary in the background so triggering doesn't stall the session. No effect on window size; safe to suggest on its own.
 
-The user edits this file directly to change either later; this skill only proposes at init.
+Per-session alternatives that don't touch global settings: the `/autocompact` command, the `--autocompact <tokens>` launch flag, and `CLAUDE_CODE_AUTO_COMPACT_WINDOW`.
+
+
 
 ## Escalation mechanics
 
