@@ -51,6 +51,31 @@ export function tierModel(v: TierValue): string {
   return typeof v === "string" ? v : v.model;
 }
 
+export const BUDGET_ENV = "HYBRID_DISPATCH_BUDGET";
+
+export interface EffectiveBudget {
+  mode: BudgetMode;
+  source: "env" | "config";
+  /** Set when the env var held something unusable — surfaced, never silently dropped. */
+  warning?: string;
+}
+
+/**
+ * Sessions are processes, so an environment variable is the natural way to give
+ * two windows on the same project different strategies without them fighting over
+ * one config file. Spoken instructions still outrank this; the skill applies those.
+ */
+export function effectiveBudget(cfg: DispatchConfig, env: NodeJS.ProcessEnv = process.env): EffectiveBudget {
+  const raw = env[BUDGET_ENV]?.trim();
+  if (!raw) return { mode: cfg.budget_mode, source: "config" };
+  if (BUDGET_MODES.includes(raw as BudgetMode)) return { mode: raw as BudgetMode, source: "env" };
+  return {
+    mode: cfg.budget_mode,
+    source: "config",
+    warning: `${BUDGET_ENV}="${raw}" is not one of ${BUDGET_MODES.join(" | ")} — using ${cfg.budget_mode} from config`,
+  };
+}
+
 /** Returns human-readable problems; empty array means the config is usable. */
 export function validate(cfg: unknown): string[] {
   const errs: string[] = [];

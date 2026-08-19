@@ -13,7 +13,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { readConfig, tierModel, tierWarnings, validate, CONFIG_FILE } from "./config.js";
+import { effectiveBudget, readConfig, tierModel, tierWarnings, validate, CONFIG_FILE } from "./config.js";
 
 export interface HookInput {
   model?: string | { id?: string; display_name?: string };
@@ -59,6 +59,9 @@ export function sessionCheck(input: HookInput, opts: { compaction?: boolean } = 
   // Tier collapse against the model actually running this session.
   for (const w of tierWarnings(cfg, model)) lines.push(w);
 
+  const budget = effectiveBudget(cfg);
+  if (budget.warning) lines.push(budget.warning);
+
   if (opts.compaction && model) {
     const s = compactionNote(model);
     if (s) lines.push(s);
@@ -67,7 +70,8 @@ export function sessionCheck(input: HookInput, opts: { compaction?: boolean } = 
   if (!lines.length) return [];
   return [
     `hybrid-dispatcher · session model ${model ?? "unknown"} · tiers ` +
-      `top=${tierModel(cfg.tiers.top)} mid=${tierModel(cfg.tiers.mid)} low=${tierModel(cfg.tiers.low)} · ${cfg.budget_mode}`,
+      `top=${tierModel(cfg.tiers.top)} mid=${tierModel(cfg.tiers.mid)} low=${tierModel(cfg.tiers.low)} · ` +
+      `${budget.mode}${budget.source === "env" ? " (env, this session)" : ""}`,
     ...lines.map((l) => `  ⚠ ${l}`),
   ];
 }

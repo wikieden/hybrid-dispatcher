@@ -26,6 +26,8 @@ export interface RunRecord {
   platform?: string;
   session_model?: string;
   budget_mode?: string;
+  /** "config" | "env" | "said" — lets history stay readable when sessions ran different strategies. */
+  budget_source?: string;
   agents: AgentRecord[];
   totals?: { agents?: number; tokens?: number; seconds?: number; by_tier?: Record<string, number> };
   escalations?: number;

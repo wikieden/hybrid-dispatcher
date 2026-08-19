@@ -82,7 +82,15 @@ When torn between two tiers, ask: **"if this comes back wrong, will I notice?"**
 
 ## Budget modes
 
-The config's `budget_mode` (the user can also override per-task: "do this cheaply" / "spare no expense") shifts the tier boundaries:
+The budget mode shifts the tier boundaries. It resolves in this order, highest first:
+
+1. **What the user just said** — "do this cheaply" / "spare no expense" wins for that task, always.
+2. **`HYBRID_DISPATCH_BUDGET`** — an environment variable holding `economy`, `balanced`, or `quality`. Check it before dispatching (`printenv HYBRID_DISPATCH_BUDGET`). Because environment variables are per-process, this is how two sessions on the same project run different strategies without fighting over one config file — one terminal launched with `HYBRID_DISPATCH_BUDGET=economy` explores cheaply while another on `quality` does release work. If it holds anything else, say so and fall back to the config rather than guessing.
+3. **`budget_mode` in `.agent-dispatch.json`** — the project default.
+
+Name the mode and, when it did not come from the config, where it came from — in the activation banner and in the run's log record, so history stays interpretable when sessions differed.
+
+The three modes:
 
 - **economy** — default one tier down whenever the output is verifiable downstream; reserve top tier for verification and final judgment only.
 - **balanced** — the rubric above, as written.
@@ -107,7 +115,7 @@ When the user states an explicit token/cost budget, plan the whole dispatch agai
    If the config carries `"collapse_ack": true`, the user has deliberately accepted a merged top/mid tier — stay silent about collapse (inversion still warns, since that one is never intentional). Offer to set this flag when a user waves the warning off, rather than making them see it again next session.
 
    Then print the banner so the user knows dispatch is being governed (they should never have to guess whether the skill ran):
-   `⚡ hybrid-dispatcher · platform=<platform> · model=<session model> · budget=<mode> · <N> subtasks planned`
+   `⚡ hybrid-dispatcher · platform=<platform> · model=<session model> · budget=<mode>[ (env)|(said)] · <N> subtasks planned`
    The per-subtask assignment list (step 2) and the closing dispatch log are the other two visibility anchors — all three are mandatory output, not optional narration.
 1. **Plan in the main session.** Decompose into subtasks with explicit inputs, outputs, and done-criteria. This is your job; do not spawn a "planner" sub-agent.
 2. **Score and assign tiers** using the rubric. Say the assignments out loud briefly (one line per subtask) so the user can see the reasoning and object.
@@ -142,7 +150,7 @@ Token and duration figures come from whatever your platform reports when a sub-a
 **Persist each run** as one JSON line appended to `.dispatch-log.jsonl` at the project root (create it on first dispatch; it is per-project history, gitignore it):
 
 ```json
-{"ts":"2026-08-16T14:22:31Z","task":"audit orderlib for bugs","platform":"claude-code","session_model":"opus","budget_mode":"economy","agents":[{"id":"S1","task":"inventory error paths","tier":"low","model":"sonnet","tokens":12400,"seconds":31,"outcome":"ok"}],"totals":{"agents":3,"tokens":83200,"seconds":154,"by_tier":{"low":12400,"mid":42100,"top":28700}},"escalations":0}
+{"ts":"2026-08-16T14:22:31Z","task":"audit orderlib for bugs","platform":"claude-code","session_model":"opus","budget_mode":"economy","budget_source":"env","agents":[{"id":"S1","task":"inventory error paths","tier":"low","model":"sonnet","tokens":12400,"seconds":31,"outcome":"ok"}],"totals":{"agents":3,"tokens":83200,"seconds":154,"by_tier":{"low":12400,"mid":42100,"top":28700}},"escalations":0}
 ```
 
 Append it with a plain shell redirect — one line, no tooling needed, and appending (never rewriting) is what lets concurrent sessions share the file safely:

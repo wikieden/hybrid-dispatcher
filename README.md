@@ -198,6 +198,23 @@ Three things are always visible:
 | "run the parser task on opus" | overrides one assignment; the rest stand |
 | *(nothing)* | balanced — the rubric as written |
 
+### Different strategies in different sessions
+
+`.agent-dispatch.json` is per *project*, but strategy often wants to be per *session* —
+one window exploring cheaply while another does release work. Since sessions are
+processes, an environment variable is the natural scope:
+
+```bash
+HYBRID_DISPATCH_BUDGET=economy claude   # this terminal: explore cheaply
+HYBRID_DISPATCH_BUDGET=quality claude   # that terminal: ship carefully
+```
+
+Precedence is **what you just said › the env var › the config file**, so a spoken
+"do this cheaply" still wins for one task without disturbing the session's mode. The
+banner names the mode and its source, and each run records `budget_source` in the log,
+so history stays readable when two sessions ran different strategies against one project.
+An unrecognized value warns and falls back to the config rather than guessing.
+
 ### Logs and token accounting
 
 **Live, while it runs** — each spawn and each return prints a line, so work leaving the

@@ -8,7 +8,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { PLATFORMS, type Platform } from "./platforms.js";
 import { hasGate, isInstalled } from "./install.js";
-import { readConfig, tierModel, tierWarnings, validate } from "./config.js";
+import { effectiveBudget, readConfig, tierModel, tierWarnings, validate } from "./config.js";
 
 export type Level = "ok" | "warn" | "error" | "info";
 export interface Finding { level: Level; text: string }
@@ -37,11 +37,14 @@ export function checkConfig(sessionModel?: string, cwd = process.cwd()): Finding
   const errs = validate(cfg);
   if (errs.length) return errs.map((e) => ({ level: "error" as const, text: `config: ${e}` }));
 
+  const budget = effectiveBudget(cfg);
   const out: Finding[] = [{
     level: "ok",
     text: `config valid · ${cfg.platform} · top=${tierModel(cfg.tiers.top)} mid=${tierModel(cfg.tiers.mid)} ` +
-          `low=${tierModel(cfg.tiers.low)} · ${cfg.budget_mode}`,
+          `low=${tierModel(cfg.tiers.low)} · ${budget.mode}` +
+          (budget.source === "env" ? ` (from ${"HYBRID_DISPATCH_BUDGET"} — this session only)` : ""),
   }];
+  if (budget.warning) out.push({ level: "warn", text: budget.warning });
   for (const w of tierWarnings(cfg, sessionModel)) out.push({ level: "warn", text: w });
   if (cfg.top_tier_subagents === false)
     out.push({ level: "info", text: "sub-agents capped at mid tier (top reserved for the main session)" });
