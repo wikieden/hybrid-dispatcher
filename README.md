@@ -377,12 +377,45 @@ wrong?" to keyword matching.
 - `dispatch-workspace/` — eval fixtures, benchmark results, and trigger-optimization
   reports from skill-creator iterations (regenerable; not part of the skill)
 
-## Evals
+## Measured behavior
 
-Iteration 1 (3 tasks × with/without skill, adversarially graded): all runs followed
-the protocol — planning stayed in the main session, mechanical work went to
-sonnet/haiku, design and verification stayed at top tier, every sub-agent finding was
-verified before absorption, and economy mode produced the intended
-cheap-generation + top-tier-verification shape. Known iteration-2 work: clean-room
-baselines (the skill leaked into baseline runs via the project skill registry) and one
-over-rigid assertion. Details in `dispatch-workspace/`.
+Numbers from real runs, not projections. Raw fixtures, gradings, and reports live in
+`dispatch-workspace/`.
+
+**Eval iteration 1** — 3 tasks (dispatch planning / tiered audit / economy sweep),
+each run end-to-end by an agent following the skill, adversarially graded:
+
+- **Cost-conscious audit** (5 seeded bugs in a fixture codebase): two sonnet finders
+  in parallel + main-session verification found **all 5 seeded bugs with zero
+  top-tier sub-agents**. Every finder claim was checked line-by-line against source:
+  **25 findings, zero hallucinations**; the orchestrator added the cross-module
+  issues the cheap finders couldn't see (missing schema init, dead error
+  infrastructure, failure-conflation chains).
+- **Economy sweep** (file-by-file summary): one haiku agent did the bulk read;
+  main-session verification then added 7 issues haiku missed — the skill run
+  surfaced **15 sketchy spots vs 8** for the comparison run, at low-tier prices.
+- **Dispatch planning** (10-subtask refactor plan): tier assignments priced at
+  **~38x relative cost vs ~100x all-top-tier — a ~60% saving** with both top-tier
+  spends placed exactly where the rubric wants them (design gate + adversarial
+  review).
+- Escalation discipline held: the one distrusted result was re-run once at the next
+  tier up, not looped.
+
+**Cross-platform, unprompted** — a cold `codex exec` run in a fresh project cited the
+gate on its own ("Workspace AGENTS.md: requires reading the Hybrid Dispatcher
+instructions before delegation"), proposed tiers **exclusively from its own OpenAI
+catalog** (verified against the local model cache — no borrowed Claude names, no
+invented models), inferred economy mode from "cost-conscious", and stopped at the
+init-confirmation boundary exactly as specified.
+
+**Trigger behavior** — across 5 description-rewrite iterations × 20 realistic
+queries: **zero false positives** (the skill never fired on near-miss queries like
+model-pricing questions or CI parallelism). Autonomous positive triggering in
+non-interactive runs measured near zero regardless of wording — which is why
+activation rides on deterministic gate files instead of description matching.
+
+**Known limits of these numbers**: iteration-1 baselines were contaminated (the
+skill leaked into "without-skill" runs via the project registry), so with/without
+deltas are not claimable yet — clean-room baselines are queued as iteration 2. The
+~60% figure uses relative tier weights (low 1x / mid 3x / top 10x), a ratio that
+holds regardless of vendor prices but has not been calibrated against real bills.
