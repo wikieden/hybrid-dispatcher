@@ -155,8 +155,19 @@ user/platform confirms their own:
 On non-Claude platforms tiers hold that platform's own identifiers — e.g. Codex records
 literal flags like `{"model": "...", "config": "model_reasoning_effort=\"xhigh\""}`.
 Opening the same project on a second platform keeps the tier *roles* and only remaps
-the identifiers (the skill offers to add a second platform block). Edit the file
-directly anytime to change defaults; per-task spoken overrides always win.
+the identifiers (the skill offers to add a second platform block).
+
+**Adjusting later** — four ways, by scope:
+
+| Scope | How |
+|---|---|
+| this one task | just say it: "这个便宜点做" |
+| this session | `HYBRID_DISPATCH_BUDGET=economy claude` |
+| this project, one key | tell the agent ("预算改 quality") — or `hybrid-dispatcher config budget_mode=quality tiers.mid=sonnet` (validated; refuses bad values without writing; warns immediately if the change collapses tiers) |
+| this project, from scratch | `hybrid-dispatcher init --yes` or edit `.agent-dispatch.json` |
+
+`hybrid-dispatcher config` with no arguments shows every setting and its provenance —
+including when an env var is overriding the file this session.
 
 ## Step 2 — Use it
 

@@ -175,6 +175,7 @@ Everything above works with no dependencies. A small CLI exists for the mechanic
 | Something seems misconfigured, or the skill isn't triggering on another platform | `hybrid-dispatcher doctor` — checks installs, gate blocks, config validity, compaction thresholds |
 | They want the skill on another machine — especially **Windows**, where the shell installer doesn't run | `hybrid-dispatcher install` |
 | They ask to redo init non-interactively | `hybrid-dispatcher init` |
+| They want to change one setting quickly ("预算改 quality", "mid 层换 sonnet") | change it for them directly — edit `.agent-dispatch.json` (or run `hybrid-dispatcher config key=value`, which validates and warns about collapses); either way, confirm the new value back in one line |
 
 | They want problems caught at session start rather than at dispatch | wire `hybrid-dispatcher session-check` into a `SessionStart` hook — it prints only when the config is broken, missing, or collapsed against the session's model, and stays silent otherwise |
 

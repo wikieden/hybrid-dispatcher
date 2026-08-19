@@ -11,7 +11,7 @@
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { stdin, stdout } from "node:process";
-import { BUDGET_MODES, readConfig, writeConfig, validate, type BudgetMode, type DispatchConfig } from "./config.js";
+import { BUDGET_MODES, effectiveBudget, readConfig, tierWarnings, writeConfig, validate, type BudgetMode, type DispatchConfig } from "./config.js";
 import { detectPlatforms, installTo, uninstallFrom, SKILL_NAME } from "./install.js";
 import { icon, runDoctor } from "./doctor.js";
 import { appendRun, loadRuns, type RunRecord } from "./log.js";
@@ -28,6 +28,8 @@ const HELP = `hybrid-dispatcher — tiered model dispatch across agent systems
   npx hybrid-dispatcher stats [--last N] [--json]         token accounting from dispatch history
   npx hybrid-dispatcher log '<json>'                      append one run record (used by the skill)
   npx hybrid-dispatcher session-check [--compaction]      SessionStart hook: warn only when something is off
+  npx hybrid-dispatcher config                            show this project's settings and where each came from
+  npx hybrid-dispatcher config <key>=<value> ...          change settings, validated (budget_mode=quality tiers.mid=sonnet)
 
 Platforms: ${PLATFORMS.map((p) => p.key).join(", ")}`;
 
@@ -138,6 +140,63 @@ function cmdLog(raw: string | undefined): number {
   return 0;
 }
 
+const SETTABLE = ["budget_mode", "top_tier_subagents", "collapse_ack", "tiers.top", "tiers.mid", "tiers.low"] as const;
+
+function cmdConfig(assignments: string[]): number {
+  const cfg = readConfig();
+  if (!cfg) {
+    console.error("no .agent-dispatch.json here — run `hybrid-dispatcher init` first");
+    return 1;
+  }
+
+  if (!assignments.length) {
+    // Show current state with provenance — a value is only trustworthy if you know
+    // whether the env var or the file is supplying it right now.
+    const budget = effectiveBudget(cfg);
+    console.log(`platform            ${cfg.platform}`);
+    for (const tier of ["top", "mid", "low"] as const) {
+      const v = cfg.tiers[tier];
+      console.log(`tiers.${tier.padEnd(4)}          ${typeof v === "string" ? v : JSON.stringify(v)}`);
+    }
+    console.log(`budget_mode         ${budget.mode}${budget.source === "env" ? "   (overridden by HYBRID_DISPATCH_BUDGET this session; file says " + cfg.budget_mode + ")" : ""}`);
+    console.log(`top_tier_subagents  ${cfg.top_tier_subagents ?? true}`);
+    console.log(`collapse_ack        ${cfg.collapse_ack ?? false}`);
+    if (budget.warning) console.log(`⚠ ${budget.warning}`);
+    console.log(`\nchange with: hybrid-dispatcher config <key>=<value>   keys: ${SETTABLE.join(", ")}`);
+    return 0;
+  }
+
+  const next = structuredClone(cfg);
+  for (const a of assignments) {
+    const eq = a.indexOf("=");
+    if (eq < 1) { console.error(`not key=value: "${a}"`); return 1; }
+    const key = a.slice(0, eq), raw = a.slice(eq + 1);
+    if (!(SETTABLE as readonly string[]).includes(key)) {
+      console.error(`unknown key "${key}" — settable: ${SETTABLE.join(", ")}`);
+      return 1;
+    }
+    const value: unknown = raw === "true" ? true : raw === "false" ? false : raw;
+    if (key.startsWith("tiers.")) {
+      if (typeof value !== "string" || !value) { console.error(`${key} needs a model name`); return 1; }
+      next.tiers[key.slice(6) as "top" | "mid" | "low"] = value;
+    } else {
+      (next as unknown as Record<string, unknown>)[key] = value;
+    }
+  }
+
+  const errs = validate(next);
+  if (errs.length) { errs.forEach((e) => console.error(`✗ ${e}`)); console.error("nothing written."); return 1; }
+
+  const p = writeConfig(next);
+  console.log(`wrote ${p}`);
+  // Immediately show what the change means, not just that it happened.
+  for (const w of tierWarnings(next)) console.log(`⚠ ${w}`);
+  const budget = effectiveBudget(next);
+  if (budget.source === "env")
+    console.log(`note: HYBRID_DISPATCH_BUDGET=${budget.mode} still overrides budget_mode in this shell`);
+  return 0;
+}
+
 async function main(): Promise<number> {
   const [cmd, ...rest] = process.argv.slice(2);
   if (!cmd || cmd === "--help" || cmd === "-h" || cmd === "help") { console.log(HELP); return 0; }
@@ -176,6 +235,8 @@ async function main(): Promise<number> {
       return cmdStats(values.last ? Number(values.last) : undefined, values.json ?? false);
     case "log":
       return cmdLog(positionals[0]);
+    case "config":
+      return cmdConfig(positionals);
     case "session-check": {
       // Hook contract: never fail the session. Any trouble here exits 0 silently.
       let input: HookInput = {};
