@@ -53,10 +53,14 @@ curl -fsSL https://raw.githubusercontent.com/wikieden/hybrid-dispatcher/main/ins
 ./install.sh --uninstall     # remove skill copies and gate blocks
 ```
 
-**Windows, or if you prefer npm** — the companion CLI does the same job cross-platform:
+**Windows** — the shell installer can't run there; use the companion CLI from a
+checkout (not yet published to npm — `npx hybrid-dispatcher` won't resolve, and an
+unpublished name is exactly the kind squatters take, so don't run it):
 
 ```bash
-npx hybrid-dispatcher install
+git clone https://github.com/wikieden/hybrid-dispatcher && cd hybrid-dispatcher/cli
+npm install && npm run build && npm link   # gives you the `hybrid-dispatcher` command
+hybrid-dispatcher install
 ```
 
 **By hand** — copy [`.claude/skills/hybrid-dispatcher/`](.claude/skills/hybrid-dispatcher/)
@@ -238,9 +242,9 @@ The skill totals it up directly for you. Once history grows, the optional CLI do
 same arithmetic faster:
 
 ```bash
-npx hybrid-dispatcher stats            # all history
-npx hybrid-dispatcher stats --last 10  # recent runs
-npx hybrid-dispatcher stats --json     # for scripts
+hybrid-dispatcher stats            # all history (after npm link from cli/)
+hybrid-dispatcher stats --last 10  # recent runs
+hybrid-dispatcher stats --json     # for scripts
 ```
 
 ```
@@ -303,11 +307,14 @@ Node 18+) exists for the mechanical chores that get tedious by hand — and for 
 where the shell installer can't run. The skill suggests it when you hit one of these,
 and otherwise does the work itself:
 
+Build once from the checkout (`cd cli && npm install && npm run build && npm link`),
+then:
+
 ```bash
-npx hybrid-dispatcher install     # cross-platform install (incl. Windows)
-npx hybrid-dispatcher init        # interactive strategy setup, with validation
-npx hybrid-dispatcher doctor      # installs, gate blocks, config validity, compaction thresholds
-npx hybrid-dispatcher stats       # token accounting over dispatch history
+hybrid-dispatcher install     # cross-platform install (incl. Windows)
+hybrid-dispatcher init        # interactive strategy setup, with validation
+hybrid-dispatcher doctor      # installs, gate blocks, config validity, compaction thresholds
+hybrid-dispatcher stats       # token accounting over dispatch history
 ```
 
 ### Catching problems at session start
@@ -319,7 +326,7 @@ stdout becomes context the agent can act on. In `~/.claude/settings.json`:
 {
   "hooks": {
     "SessionStart": [
-      { "hooks": [{ "type": "command", "command": "npx hybrid-dispatcher session-check" }] }
+      { "hooks": [{ "type": "command", "command": "node <checkout>/cli/dist/index.js session-check" }] }
     ]
   }
 }

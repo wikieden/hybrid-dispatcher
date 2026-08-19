@@ -51,8 +51,7 @@ Before spawning any sub-agent / delegating any subtask, read and follow:
 
 Core rules: planning and synthesis stay in the main session (the user-selected model);
 each sub-agent runs at the cheapest capable tier (top/mid/low) per the skill's rubric
-and the project's \`.agent-dispatch.json\` (run \`npx hybrid-dispatcher init\` to create
-it). Tier models MUST come from ${p.modelCatalogHint} — never another vendor's model
+and the project's \`.agent-dispatch.json\` (run the skill's init to create it). Tier models MUST come from ${p.modelCatalogHint} — never another vendor's model
 names. Spawn mechanics: \`${join(skillDir, "references")}\`.
 ${END}
 `;

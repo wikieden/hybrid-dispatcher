@@ -147,10 +147,12 @@ Total: 3 agents · 83.2k tokens · 154s wall · by tier: low 12.4k / mid 42.1k /
 
 Token and duration figures come from whatever your platform reports when a sub-agent finishes — see the platform reference for where to read them. If a platform reports nothing, write `n/a` rather than guessing; a fabricated number is worse than a missing one.
 
+**Record what actually ran, not just what you asked for.** Platforms substitute models silently when the requested one is unavailable (Claude Code warns and falls back; other platforms may not even warn). Wherever the platform exposes the served model — a substitution warning, headless `modelUsage`, the CLI's own usage line — put it in the record as `model_actual`, and flag the row in the in-session log when it differs from the request. When nothing verifies it, leave `model_actual` out; a tier-savings report built on assumed models is the kind of plausible-but-wrong number this skill exists to avoid.
+
 **Persist each run** as one JSON line appended to `.dispatch-log.jsonl` at the project root (create it on first dispatch; it is per-project history, gitignore it):
 
 ```json
-{"ts":"2026-08-16T14:22:31Z","task":"audit orderlib for bugs","platform":"claude-code","session_model":"opus","budget_mode":"economy","budget_source":"env","agents":[{"id":"S1","task":"inventory error paths","tier":"low","model":"sonnet","tokens":12400,"seconds":31,"outcome":"ok"}],"totals":{"agents":3,"tokens":83200,"seconds":154,"by_tier":{"low":12400,"mid":42100,"top":28700}},"escalations":0}
+{"ts":"2026-08-16T14:22:31Z","task":"audit orderlib for bugs","platform":"claude-code","session_model":"opus","budget_mode":"economy","budget_source":"env","agents":[{"id":"S1","task":"inventory error paths","tier":"low","model":"sonnet","model_actual":"sonnet","tokens":12400,"seconds":31,"outcome":"ok"}],"totals":{"agents":3,"tokens":83200,"seconds":154,"by_tier":{"low":12400,"mid":42100,"top":28700}},"escalations":0}
 ```
 
 Append it with a plain shell redirect — one line, no tooling needed, and appending (never rewriting) is what lets concurrent sessions share the file safely:
@@ -167,14 +169,14 @@ Everything above works with no dependencies. A small CLI exists for the mechanic
 
 | When | Suggest |
 |---|---|
-| History has grown past a few dozen runs, or they ask for it repeatedly | `npx hybrid-dispatcher stats` — same numbers, computed rather than eyeballed |
-| Something seems misconfigured, or the skill isn't triggering on another platform | `npx hybrid-dispatcher doctor` — checks installs, gate blocks, config validity, compaction thresholds |
-| They want the skill on another machine — especially **Windows**, where the shell installer doesn't run | `npx hybrid-dispatcher install` |
-| They ask to redo init non-interactively | `npx hybrid-dispatcher init` |
+| History has grown past a few dozen runs, or they ask for it repeatedly | `hybrid-dispatcher stats` — same numbers, computed rather than eyeballed |
+| Something seems misconfigured, or the skill isn't triggering on another platform | `hybrid-dispatcher doctor` — checks installs, gate blocks, config validity, compaction thresholds |
+| They want the skill on another machine — especially **Windows**, where the shell installer doesn't run | `hybrid-dispatcher install` |
+| They ask to redo init non-interactively | `hybrid-dispatcher init` |
 
 | They want problems caught at session start rather than at dispatch | wire `hybrid-dispatcher session-check` into a `SessionStart` hook — it prints only when the config is broken, missing, or collapsed against the session's model, and stays silent otherwise |
 
-If the CLI is absent, do the work yourself as described above; a missing optional tool is never a reason to stall. The judgment half of this skill — the rubric, decomposition, verification strategy — has no CLI equivalent by design and stays here.
+The CLI is not on npm yet — it comes from the repo checkout (`cli/`, `npm link`); check `command -v hybrid-dispatcher` before suggesting it, and never suggest `npx` for an unpublished name. If the CLI is absent, do the work yourself as described above; a missing optional tool is never a reason to stall. The judgment half of this skill — the rubric, decomposition, verification strategy — has no CLI equivalent by design and stays here.
 
 ## Task-type playbooks
 

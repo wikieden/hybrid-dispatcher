@@ -50,6 +50,7 @@ Caveats worth passing to the user rather than papering over:
 - An agent that spawns its own sub-agents reports **its own** tokens; nested agents notify separately. Sum them if you want the true subtree cost, and say which you reported.
 - An agent resumed with `SendMessage` notifies again — add the segments rather than overwriting, or the first leg vanishes from the tally.
 - Workflow-tool runs report per-agent totals through the workflow journal instead; `budget.spent()` gives the running total inside a script.
+- **Verifying the served model**: interactive sessions print a warning naming requested and substituted models when a sub-agent's model is swapped — capture it into `model_actual`. Headless runs expose the truth in the result's `modelUsage` field. The background Agent notification does not name the model, so absent a warning, treat the request as unverified rather than confirmed.
 
 ## Detecting the session model (for the tier-collapse check)
 

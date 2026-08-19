@@ -13,7 +13,15 @@ export interface AgentRecord {
   id?: string;
   task?: string;
   tier?: string;
+  /** The model the orchestrator requested for this agent. */
   model?: string;
+  /**
+   * The model that actually served it, when the platform reports one (headless
+   * modelUsage, substitution warnings, codex stderr). Platforms silently
+   * substitute when a model is unavailable — a savings report built on requested
+   * models can lie. Omit when unverifiable; never copy `model` here to fill it.
+   */
+  model_actual?: string | null;
   /** null when the platform doesn't report usage — never guess a number. */
   tokens?: number | null;
   seconds?: number | null;
