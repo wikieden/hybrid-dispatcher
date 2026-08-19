@@ -25,13 +25,13 @@ Shape: narrow, deep, sequential spine with parallel limbs. Design gates everythi
 | Stage | Tier | Why |
 |---|---|---|
 | Architecture / API / error-contract design | **top** (or main session) | Mistakes here silently poison every downstream task |
-| Implementation from the written spec (per module, parallel) | mid | Clear spec + test gate; low only if the edit is fully mechanical AND test-covered |
+| Implementation from the written spec (per module, parallel) | mid | This is the code floor: never lower by default. Low only for genuinely mechanical edits (renames, format conversions, boilerplate) that are also test-gated — and say so when you do |
 | Test writing (characterization first, then spec tests) | mid | Tests are the plan's verifier — worth more than mechanical effort |
 | Running tests / builds / linters, reporting verbatim | low | Execute-and-report; failure is impossible to miss |
 | Adversarial diff review vs the spec | **top** | Misses look plausible and get absorbed — the canonical top-tier job |
 | Debugging that resisted one attempt | escalate to top | Second failure means the problem is subtler than it looks |
 
-Rules of thumb: never fan out implementation before the design is approved in the main session. The test suite is what buys the tier discount on implementation — no tests, no discount (bump implementation to the tier above). Keep one agent per module boundary so diffs don't collide; use worktree isolation when they must touch shared files.
+Rules of thumb: never fan out implementation before the design is approved in the main session. Tests gate but don't excuse: a suite catches what it covers, and a weak model's mistakes live precisely in what it doesn't — which is why implementation floors at mid even when test-gated. No tests at all bumps implementation to top. Keep one agent per module boundary so diffs don't collide; use worktree isolation when they must touch shared files.
 
 ## 文档型 — Documentation / writing
 

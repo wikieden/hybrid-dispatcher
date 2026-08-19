@@ -80,6 +80,8 @@ Then assign:
 
 When torn between two tiers, ask: **"if this comes back wrong, will I notice?"** If yes (there's a test, a checkable artifact, or a downstream verifier), take the cheaper tier. If a wrong answer would look plausible and get absorbed, take the higher one. Verification asymmetry is your main cost lever: cheap generation + strong verification usually beats expensive generation with no check.
 
+**Code floor: subtasks that write or modify code default to mid tier, minimum.** The "will I notice" test over-trusts test gates here — a weak model's diff fails in exactly the ways the tests don't cover (edge-case semantics, error paths, subtle API misuse), and a plausible-looking wrong diff is the most expensive thing to absorb. Low tier remains right for code-*adjacent* work (searching, reading, running tests, reporting) and for edits that are genuinely mechanical — renames, format conversions, generated boilerplate — **and** fully test-gated. When you do send a code edit to low tier, say which of those two conditions justified it.
+
 ## Budget modes
 
 The budget mode shifts the tier boundaries. It resolves in this order, highest first:
@@ -92,7 +94,7 @@ Name the mode and, when it did not come from the config, where it came from — 
 
 The three modes:
 
-- **economy** — default one tier down whenever the output is verifiable downstream; reserve top tier for verification and final judgment only.
+- **economy** — default one tier down whenever the output is verifiable downstream; reserve top tier for verification and final judgment only. The code floor still applies: code-writing subtasks don't drop below mid unless mechanical-and-test-gated — economy trims exploration and grunt work, not code quality.
 - **balanced** — the rubric above, as written.
 - **quality** — critical-path subtasks go one tier up; verification always at top tier; prefer 2–3 independent attempts + judge over single attempts for design questions.
 
