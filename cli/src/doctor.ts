@@ -60,10 +60,17 @@ export function checkCompaction(): Finding[] {
   for (const p of PLATFORMS) {
     if (!existsSync(p.configDir) || p.compaction.unit === "none") continue;
     const f = p.compaction.file;
-    if (!existsSync(f)) { out.push({ level: "warn", text: `${p.label}: no ${f} — compaction threshold unset (defaults are late)` }); continue; }
+    // On absolute-token platforms (Claude Code, Codex) the threshold doubles as a
+    // ceiling on the usable window, so "unset" is a legitimate choice, not a defect —
+    // report the trade, never prescribe a number.
+    const unsetNote =
+      p.compaction.unit === "tokens"
+        ? `${p.label}: ${p.compaction.key} unset — full window, compaction triggers late (setting it lowers the usable ceiling to the same value; that trade is yours)`
+        : `${p.label}: ${p.compaction.key} unset — platform default applies`;
+    if (!existsSync(f)) { out.push({ level: "info", text: unsetNote }); continue; }
     const val = readThreshold(readFileSync(f, "utf8"), p);
     if (val === null) {
-      out.push({ level: "warn", text: `${p.label}: ${p.compaction.key} not set in ${f} — default triggers late; 50–60% of window suits 1M+ contexts` });
+      out.push({ level: "info", text: unsetNote });
     } else if (p.compaction.unit === "fraction") {
       const late = val > 0.65;
       out.push({ level: late ? "warn" : "ok", text: `${p.label}: compaction at ${(val * 100).toFixed(0)}% of context${late ? " — consider 50–60% for long-context models" : ""}` });
